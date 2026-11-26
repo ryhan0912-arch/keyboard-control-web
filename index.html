@@ -81,6 +81,9 @@ input[type=color]{width:44px;height:32px;border:1px solid var(--line);border-rad
 .kb .k i{position:absolute;left:0;right:0;bottom:0;height:5px}
 .kb .k:hover{outline:2px solid var(--accent)}
 .kb .k.none{opacity:.4;font-size:9px}
+.kb .k.sel{outline:3px solid var(--accent);z-index:2}
+.kb .k.changed{box-shadow:inset 0 0 0 2px var(--accent);font-weight:600}
+.kb .k small{display:block;font-size:8px;color:var(--accent);font-weight:600}
 .tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 #log{font:12px/1.4 ui-monospace,Consolas,monospace;max-height:260px;overflow:auto;background:var(--bg);border-radius:8px;padding:8px;white-space:pre-wrap;margin-top:8px}
 .disabled-ui{opacity:.45;pointer-events:none}
@@ -190,6 +193,36 @@ footer a{color:inherit}
     </div>
     </div>
     <p class="sub" style="margin:8px 0 0" id="sStatus">Pick an effect, color or preset, then press Apply. It's saved in the keyboard and stays in 2.4G and Bluetooth mode.</p>
+  </section>
+
+  <section class="card wide" id="keyCard" hidden>
+    <h2>Key remapping — saved in the keyboard</h2>
+    <div id="kmControls">
+      <p class="sub" style="margin:0">Click a key, choose what it should do, then press Apply. Keys you changed get a blue outline.</p>
+      <div class="kbwrap"><div class="kb" id="kmKb"></div></div>
+      <div class="row" style="margin-top:10px;border-top:1px solid var(--line)">
+        <span><b id="kmName">No key selected</b><div class="sub" id="kmNow"></div></span>
+        <div class="tools">
+          <span class="sub">Hold</span>
+          <label class="sub"><input type="checkbox" id="kmModCtrl" disabled> Ctrl</label>
+          <label class="sub"><input type="checkbox" id="kmModShift" disabled> Shift</label>
+          <label class="sub"><input type="checkbox" id="kmModAlt" disabled> Alt</label>
+          <label class="sub"><input type="checkbox" id="kmModWin" disabled> Win</label>
+          <span class="sub">+</span>
+          <select id="kmFunc" aria-label="New function" disabled style="min-width:200px"></select>
+          <button class="small" id="kmDefault" disabled>Default</button>
+          <button class="small" id="kmDisable" disabled>Disable key</button>
+        </div>
+      </div>
+      <p class="sub" id="kmWarn" style="margin:4px 0 0;color:var(--warn)"></p>
+      <div class="tools" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+        <button class="primary" id="kmApply" disabled>Apply</button>
+        <button id="kmUndo" disabled>Undo changes</button>
+        <button id="kmResetAll">Reset all keys to default</button>
+        <span class="sub" id="kmDirty"></span>
+      </div>
+    </div>
+    <p class="sub" style="margin:8px 0 0" id="kmStatus">Connect the keyboard with the USB cable in wired mode to remap keys.</p>
   </section>
 
   <section class="card wide" id="perKeyCard">
@@ -579,8 +612,17 @@ async function sinoLoad(){   // show what the keyboard currently has
   }
   buildSinoModes(); renderSino();
 }
+/* Unlock for a permanent save (confirmed on the K980: without it, changes only last until the keyboard restarts).
+   Xinmeng's driver sends this "Send Psd" command from its Cfg.ini (PSD=2,0,0,0,1,8) before every save. */
+async function sinoUnlock(){
+  const d=sinoCfgDev();
+  await d.sendFeatureReport(5, Uint8Array.of(0x01,0x02,0x00,0x00,0x00));
+  log("→", Uint8Array.of(5,0x01,0x02,0,0,0), "(unlock for saving)");
+  await sleep(30);
+}
 async function sinoSave(){
   if(!sinoLoaded){ $("sStatus").textContent="Saving is disabled because the keyboard's lighting couldn't be read."; return; }
+  await sinoUnlock();
   const want=applyTo(await sinoRead());
   await sinoWrite(want.slice());
   const v=await sinoRead();
@@ -638,6 +680,141 @@ function renderSino(){
     b.setAttribute("aria-pressed", String(same)); b.style.background=same?"var(--accent)":""; b.style.color=same?"var(--accent-ink)":"";
   });
 }
+/* ---------- K980 key remapping (verified on a real K980) ----------
+   Key table = page D4 (Windows layer; D8 is the Mac layer). Read: 05 [84 D4 00 00 00] -> feature 06.
+   Write: unlock 05 [01 02 00 00 00] -> feature 06 [04 D4 00 40 00 00 00] + 1024 bytes -> 05 [83 B6] -> write B6 page.
+   Entry = 4 bytes per LED slot (same numbering as K980_LAYOUT):
+     00 00 00 <HID usage> key / 06 00 00 E0..E7 modifier / 04 00 <hi> <lo> media (consumer) / 02 00 00 n key with an Fn function */
+const K980_DEFAULT_KEYS="0200000F000000350000002B0200002D060000E1060000E0020000000000001E02000019020000160000001D0200000C020000010000001F0200001A020000150000001B060000E202000002000000200200001B00000007000000060000009102000003000000210200001C00000009000000190000008B02000004000000220200001D0200000D000000050000002C02000005000000230000001C0000000B000000110000008A0200000600000024000000180000000D000000100000009002000007000000250000000C0000000E00000036060000E60200000800000026000000120000000F00000037200000000200000900000027000000130000003300000038060000E40200000A0000002D0000002F00000034060000E5000000880200000B0000002E000000300200002C00000064020000120200002E0000002A0200002C0000002802000010020000110000004A000000530000005F0000005C00000059020000130200002F00000054000000600000005D0000005A000000620000004B00000055000000610000005E0000005B000000630000004E00000056000000570000008500000058";
+/* Keys with an Fn shortcut (02 00 00 n) keep their normal function in a second table at data offset 0x210 + 4n.
+   Editing that entry changes the key and keeps its Fn shortcut (Xinmeng's driver does the same).
+   Factory values of that table, from the K980's own key table: */
+const K980_T2_DEFAULT={15:"00000029",45:"00000039",0:"0000003A",25:"00000014",22:"00000004",12:"060000E3",1:"0000003B",26:"0000001A",21:"00000016",2:"0000003C",27:"00000008",3:"0000003D",28:"00000015",4:"0000003E",29:"00000017",13:"0000000A",5:"0000003F",6:"00000040",7:"00000041",8:"00000042",9:"00000043",10:"00000044",11:"00000045",44:"00000031",18:"00000050",46:"0000004C",16:"00000052",17:"00000051",19:"0000004F",47:"0000004D"};
+const slotDef=slot=>K980_DEFAULT_KEYS.substr(slot*8,8);
+const T2_USE=(()=>{ const c={}; for(let s=0;s<107;s++){ const d=slotDef(s); if(d.startsWith("02")){ const n=parseInt(d.substr(6,2),16); c[n]=(c[n]||0)+1; } } return c; })();
+const kmT2=slot=>{ const d=slotDef(slot); if(!d.startsWith("02")) return null; const n=parseInt(d.substr(6,2),16); return (T2_USE[n]===1 && K980_T2_DEFAULT[n])?n:null; };
+const kmAddr=slot=>{ const n=kmT2(slot); return n!=null ? 0x210+4*n : 4*slot; };     // data offset of the entry to edit
+const kmDefault=slot=>{ const n=kmT2(slot); return n!=null ? K980_T2_DEFAULT[n] : slotDef(slot); };
+const MOD_BITS=[["Ctrl",1],["Shift",2],["Alt",4],["Win",8]];
+const KEY_GROUPS=(()=>{
+  const k=(n,c)=>[n,"000000"+c.toString(16).padStart(2,"0").toUpperCase()];
+  const letters=[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map((ch,i)=>k(ch,0x04+i));
+  const nums=[..."1234567890"].map((ch,i)=>k(ch,0x1E+i));
+  const fkeys=[...Array(12)].map((_,i)=>k("F"+(i+1),0x3A+i)).concat([...Array(12)].map((_,i)=>k("F"+(13+i),0x68+i)));
+  return [
+    ["Letters",letters],["Numbers",nums],["Function keys",fkeys],
+    ["Editing",[k("Enter",0x28),k("Esc",0x29),k("Backspace",0x2A),k("Tab",0x2B),k("Space",0x2C),k("Caps Lock",0x39),k("Insert",0x49),k("Delete",0x4C),k("Print Screen",0x46),k("Scroll Lock",0x47),k("Pause",0x48),k("Menu",0x65)]],
+    ["Symbols",[k("- _",0x2D),k("= +",0x2E),k("[ {",0x2F),k("] }",0x30),k("\\ |",0x31),k("; :",0x33),k("' \"",0x34),k("` ~",0x35),k(", <",0x36),k(". >",0x37),k("/ ?",0x38)]],
+    ["Navigation",[k("Home",0x4A),k("End",0x4D),k("Page Up",0x4B),k("Page Down",0x4E),k("Up",0x52),k("Down",0x51),k("Left",0x50),k("Right",0x4F)]],
+    ["Modifiers",[["Left Ctrl","060000E0"],["Left Shift","060000E1"],["Left Alt","060000E2"],["Left Win","060000E3"],["Right Ctrl","060000E4"],["Right Shift","060000E5"],["Right Alt","060000E6"],["Right Win","060000E7"]]],
+    ["Number pad",[k("Num Lock",0x53),k("Num /",0x54),k("Num *",0x55),k("Num -",0x56),k("Num +",0x57),k("Num Enter",0x58),...[..."1234567890"].map((ch,i)=>k("Num "+ch,0x59+i)),k("Num .",0x63)]],
+    ["Media",[["Play / Pause","040000CD"],["Next track","040000B5"],["Previous track","040000B6"],["Stop","040000B7"],["Mute","040000E2"],["Volume up","040000E9"],["Volume down","040000EA"],["Calculator","04000192"],["Mail","0400018A"],["My Computer","04000194"],["Browser home","04000223"],["Search","04000221"]]],
+  ];
+})();
+const KEY_NAMES=Object.fromEntries(KEY_GROUPS.flatMap(([,l])=>l.map(([n,e])=>[e,n])));
+const entryName=e=>{
+  if(e==="00000000") return "Disabled";
+  if(KEY_NAMES[e]) return KEY_NAMES[e];
+  const m=parseInt(e.substr(4,2),16);   // key combination: 00 00 <modifiers> <key>
+  if(e.startsWith("0000") && m){ const key=KEY_NAMES["000000"+e.substr(6,2)]||("Code "+e.substr(6,2));
+    const order=[["Win",8],["Ctrl",1],["Alt",4],["Shift",2]];
+    const mods=order.filter(([,b])=>m&b).map(([n])=>n).concat(order.filter(([,b])=>m&(b<<4)).map(([n])=>"Right "+n)); return mods.concat(key).join("+"); }
+  return e.startsWith("02")?"Built-in key with Fn function":"Code "+e; };
+let KM={loaded:false, cur:null, staged:{}, sel:null};
+const kmHex=(b,slot)=>{ const a=8+kmAddr(slot); return [...b.slice(a,a+4)].map(x=>x.toString(16).padStart(2,"0")).join("").toUpperCase(); };
+function kmCombo(){ const v=$("kmFunc").value; if(!v) return ""; let m=0; MOD_BITS.forEach(([n,b])=>{ if($("kmMod"+n).checked) m|=b; });
+  return (m && v.startsWith("000000")) ? "0000"+m.toString(16).padStart(2,"0").toUpperCase()+v.substr(6,2) : v; }
+async function kmReadPage(op,page){
+  const d=sinoCfgDev();
+  await d.sendFeatureReport(5, Uint8Array.of(op,page,0,0,0)); await sleep(40);
+  const r=await d.receiveFeatureReport(6);
+  let b=new Uint8Array(r.buffer,r.byteOffset,r.byteLength); if(b[0]!==6) b=Uint8Array.of(6,...b);
+  return b.slice();
+}
+async function kmLoad(){
+  try{
+    const b=await kmReadPage(0x84,0xD4);
+    log("←", b.slice(0,64), `(key table, ${b.length} bytes, first 64 shown)`);
+    if(!((b[1]&0x7F)===4 && b[2]===0xD4)) throw new Error("the key table didn't look as expected");
+    KM.cur=b; KM.loaded=true; KM.staged={};
+    $("kmStatus").textContent="Showing the keys saved in your keyboard (Windows layer).";
+  }catch(e){ KM.loaded=false; log("!",null,e.message); $("kmStatus").textContent="Couldn't read the key table ("+e.message+") - remapping is disabled to keep your keyboard safe."; }
+  renderKm();
+}
+function kmEntry(slot){ return KM.staged[slot] ?? (KM.cur?kmHex(KM.cur,slot):kmDefault(slot)); }
+function kmSetDirty(){ const n=Object.keys(KM.staged).length, ok=KM.loaded && kb?.family==="sino";
+  $("kmApply").disabled=!n||!ok; $("kmUndo").disabled=!n; $("kmDirty").textContent=n?`${n} key${n>1?"s":""} not applied yet - press Apply.`:""; }
+function buildKmKeyboard(){
+  const el=$("kmKb"); el.innerHTML="";
+  const keys=K980_LAYOUT.map(([label,id,x1,y1,x2,y2])=>({label,id,x:x1,y:y1,w:x2-x1,h:y2-y1})), f=keyFrame(keys);
+  el.style.aspectRatio=`${f.w}/${f.h}`;
+  for(const k of keys){ const d=document.createElement("div"); d.className="k"; d.dataset.i=k.id; d.dataset.label=k.label;
+    Object.assign(d.style,{left:((k.x-f.x0)/f.w*100)+"%",top:((k.y-f.y0)/f.h*100)+"%",width:(k.w/f.w*100)+"%",height:(k.h/f.h*100)+"%",cursor:"pointer"});
+    d.onclick=()=>{ KM.sel=+k.id; renderKm(); }; el.append(d); }
+}
+function renderKm(){
+  document.querySelectorAll("#kmKb .k").forEach(d=>{
+    const s=+d.dataset.i, e=kmEntry(s), changed=e!==kmDefault(s);
+    d.classList.toggle("changed",changed); d.classList.toggle("sel",s===KM.sel);
+    d.innerHTML=esc(d.dataset.label)+(changed?`<small>${esc(entryName(e))}</small>`:"");
+    d.title=`${d.dataset.label}: ${entryName(e)}`;
+  });
+  const L=KM.sel!=null?K980_LAYOUT.find(x=>x[1]===KM.sel):null;
+  const has=!!L, lab=has?((L[2]>=505 && L[3]>60 && !/^Num/.test(L[0]))?"Num "+L[0]:L[0]):"";
+  $("kmName").textContent=has?`Key: ${lab}`:"No key selected";
+  const e=has?kmEntry(KM.sel):"";
+  $("kmNow").textContent=has?`Now: ${entryName(e)}${KM.staged[KM.sel]?" (not applied yet)":""} - Default: ${entryName(kmDefault(KM.sel))}`:"Click a key on the drawing.";
+  $("kmFunc").disabled=$("kmDefault").disabled=$("kmDisable").disabled=!has;
+  MOD_BITS.forEach(([n])=>{ $("kmMod"+n).disabled=!has; });
+  if(has){ const m=e.startsWith("0000")?parseInt(e.substr(4,2),16):0;
+    $("kmFunc").value=KEY_NAMES[m?"000000"+e.substr(6,2):e]?(m?"000000"+e.substr(6,2):e):"";
+    MOD_BITS.forEach(([n,b])=>{ $("kmMod"+n).checked=!!(m&b); }); }
+  $("kmWarn").textContent=!has?"": kmT2(KM.sel)!=null ? "This key also has an Fn shortcut — it is kept when you remap the key."
+    : slotDef(KM.sel).startsWith("02") ? "This key also has an Fn shortcut. Remapping it replaces that too — use Default to get it back." : "";
+  kmSetDirty();
+}
+function kmStage(entry){ if(KM.sel==null) return; const cur=KM.cur?kmHex(KM.cur,KM.sel):kmDefault(KM.sel);
+  if(entry===cur) delete KM.staged[KM.sel]; else KM.staged[KM.sel]=entry; renderKm(); }
+async function kmApply(){
+  const b=$("kmApply"); b.disabled=true; b.textContent="Applying...";
+  try{
+    await queue(async()=>{
+      const d=sinoCfgDev();
+      await sinoUnlock();
+      const cfg=await sinoRead();
+      const km=await kmReadPage(0x84,0xD4);
+      if(!((km[1]&0x7F)===4 && km[2]===0xD4)) throw new Error("the key table didn't look as expected - nothing was written");
+      const data=new Uint8Array(1031); data.set([0x04,0xD4,0x00,0x40,0x00,0x00,0x00]); data.set(km.slice(8,8+1024),7);
+      for(const [slot,entry] of Object.entries(KM.staged)){
+        const s=+slot, a=kmAddr(s);
+        for(let i=0;i<4;i++) data[7+a+i]=parseInt(entry.substr(i*2,2),16);
+        if(kmT2(s)!=null) for(let i=0;i<4;i++) data[7+4*s+i]=parseInt(slotDef(s).substr(i*2,2),16);   // keep the Fn link
+      }
+      await d.sendFeatureReport(6, data); log("→", data.slice(0,64), "(write key table)"); await sleep(60);
+      await sinoWrite(cfg.slice());   // writing the settings page makes the keyboard take the new keys
+      const v=await kmReadPage(0x84,0xD4);
+      const bad=Object.entries(KM.staged).filter(([s,e])=>kmHex(v,+s)!==e);
+      if(bad.length) throw new Error(`the keyboard didn't confirm ${bad.length} key(s)`);
+      KM.cur=v; KM.staged={};
+    });
+    $("kmStatus").textContent=`Keys applied and saved to keyboard ✓ (${new Date().toLocaleTimeString()})`;
+  }catch(e){ $("kmStatus").textContent=`Not saved - ${e.message}.`; }
+  b.textContent="Apply"; renderKm();
+}
+function kmResetAll(){ for(const [,id] of K980_LAYOUT){ const cur=KM.cur?kmHex(KM.cur,id):kmDefault(id); if(cur!==kmDefault(id)) KM.staged[id]=kmDefault(id); else delete KM.staged[id]; } renderKm(); }
+function buildKmUI(){
+  const s=$("kmFunc"); s.innerHTML=`<option value="">- choose what this key does -</option>`;
+  for(const [g,list] of KEY_GROUPS){ const og=document.createElement("optgroup"); og.label=g;
+    for(const [n,e] of list){ const o=document.createElement("option"); o.value=e; o.textContent=n; og.append(o); } s.append(og); }
+  s.onchange=()=>{ const v=kmCombo(); if(v) kmStage(v); };
+  MOD_BITS.forEach(([n])=>{ $("kmMod"+n).onchange=()=>{ const v=kmCombo(); if(v) kmStage(v); }; });
+  $("kmDefault").onclick=()=>kmStage(kmDefault(KM.sel));
+  $("kmDisable").onclick=()=>kmStage("00000000");
+  $("kmApply").onclick=kmApply;
+  $("kmUndo").onclick=()=>{ KM.staged={}; renderKm(); };
+  $("kmResetAll").onclick=kmResetAll;
+  buildKmKeyboard(); renderKm();
+}
 let sinoTimer=null;
 const queueSino=()=>{ if(!kb||kb.family!=="sino") return; clearTimeout(sinoTimer); sinoTimer=setTimeout(()=>queue(sinoSend),80); };
 
@@ -681,7 +858,7 @@ async function connect(g){
   $("introCard").hidden=true;
   render(); renderDevices();
   if(kb.family==="xvx-dongle"){ readBattery(); battTimer=setInterval(readBattery, 15000); }
-  if(kb.family==="sino"){ sinoLoaded=false; $("sStatus").textContent="Reading the lighting saved in your keyboard…"; queue(sinoLoad); }
+  if(kb.family==="sino"){ sinoLoaded=false; $("sStatus").textContent="Reading the lighting saved in your keyboard…"; queue(sinoLoad); KM.loaded=false; $("kmStatus").textContent="Reading the keys saved in your keyboard…"; queue(kmLoad); }
 }
 async function disconnect(silent){
   clearInterval(battTimer); battTimer=null;
@@ -774,6 +951,9 @@ function render(){
   document.querySelectorAll(".xvx").forEach(c=>{ c.hidden=!xvx; });
   const relay=kb?.family==="k980-relay";
   $("sinoCard").hidden=!(kb?.family==="sino" || relay);
+  $("keyCard").hidden=!(kb?.family==="sino" || relay);
+  $("kmControls").classList.toggle("disabled-ui", relay);
+  if(relay) $("kmStatus").textContent="Locked while the keyboard is in "+(kb.bus==="bluetooth"?"Bluetooth":"2.4G")+" mode — connect the USB cable in wired mode to remap keys.";
   $("sControls").classList.toggle("disabled-ui", relay);
   if(relay) $("sStatus").textContent="Locked while the keyboard is in "+(kb.bus==="bluetooth"?"Bluetooth":"2.4G")+" mode — connect the USB cable in wired mode to use these.";
   $("relayCard").hidden=!relay;
@@ -908,6 +1088,7 @@ function buildUI(){
   $("sBright").oninput=e=>{ SL.bright=+e.target.value; queueSinoSave(); };
   $("sSpeed").oninput=e=>{ SL.speed=+e.target.value; queueSinoSave(); };
   buildSinoPresets();
+  buildKmUI();
   $("sApply").onclick=sinoApply;
   $("sRevert").onclick=()=>{ $("sStatus").textContent="Reloading the lighting saved in your keyboard…"; queue(sinoLoad); };
   renderSino();
