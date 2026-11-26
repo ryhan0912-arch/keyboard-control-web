@@ -288,12 +288,13 @@ const LAYOUT=[["Esc",1,18,31,30,30],["F1",2,69,31,30,30],["F2",3,109,31,30,30],[
 ["Ctrl",91,18,240,40,30],["Win",92,69,240,40,30],["Alt",93,119,240,40,30],["Space",94,171,240,235,30],["Alt",95,417,240,40,30],["Fn",96,466,240,40,30],["←",99,536,240,30,30],["↓",100,576,240,30,30],["→",102,615,240,30,30],["0",104,670,240,30,30],[".",105,709,240,30,30]];
 
 /* Sinowealth per-key slots: 21 columns x 6 rows, slot = column*6 + row ("" = no LED on the reference board) */
-const SINO_SLOTS=["Esc","`","Tab","Caps","Shift","Ctrl", "","1","Q","A","Z","Win", "F1","2","W","S","X","Alt", "F2","3","E","D","C","",
- "F3","4","R","F","V","", "F4","5","T","G","B","Space", "F5","6","Y","H","N","", "F6","7","U","J","M","",
- "F7","8","I","K",",","Alt", "F8","9","O","L",".","Fn", "F9","0","P",";","/","Menu", "F10","-","[","'","","Ctrl",
- "F11","=","]","","","", "F12","Bksp","\\","Enter","Shift","Ctrl", "PrtSc","Ins","Del","","","←", "ScrLk","Home","End","","↑","↓",
- "Pause","PgUp","PgDn","","","→", "Mute","Num","7","4","1","0", "Calc","/","8","5","2","", "Lock","*","9","6","3",".",
- "Desk","-","+","","Enter",""];
+/* XINMENG K980 layout from Xinmeng's own driver (Cfg.ini [KBKEY]): [label, LED slot, x1, y1, x2, y2] */
+const K980_LAYOUT=[["Esc",0,18,21,41,46],["F1",6,60,21,83,46],["F2",12,90,21,113,46],["F3",18,123,21,146,46],["F4",24,154,21,177,46],["F5",30,194,21,217,46],["F6",36,226,21,249,46],["F7",42,259,21,282,46],["F8",48,291,21,314,46],["F9",54,331,22,354,47],["F10",60,363,22,386,47],["F11",66,395,22,418,47],["F12",72,428,22,451,47],["Del",78,466,22,489,47],["Home",84,512,21,535,46],["End",90,543,21,566,46],["PgUp",96,576,20,599,45],["PgDn",102,607,20,630,45],
+["`",1,18,64,41,89],["1",7,52,64,75,89],["2",13,83,64,106,89],["3",19,114,64,137,89],["4",25,146,65,169,90],["5",31,178,65,201,90],["6",37,210,65,233,90],["7",43,242,65,265,90],["8",49,274,65,297,90],["9",55,305,65,328,90],["0",61,337,65,360,90],["-",67,370,65,393,90],["=",73,401,65,424,90],["Backspace",79,435,65,487,90],["Num",85,512,64,535,89],["/",91,543,64,566,89],["*",97,575,64,598,89],["-",103,607,64,630,89],
+["Tab",2,20,96,56,121],["Q",8,66,96,89,121],["W",14,98,96,121,121],["E",20,129,96,152,121],["R",26,161,96,184,121],["T",32,193,96,216,121],["Y",38,225,96,248,121],["U",44,257,96,280,121],["I",50,289,96,312,121],["O",56,321,97,344,122],["P",62,353,97,376,122],["[",68,386,97,409,122],["]",74,417,97,440,122],["\\",80,449,96,487,121],["7",86,512,96,535,121],["8",92,544,96,567,121],["9",98,577,96,600,121],["+",104,609,96,632,150],
+["Caps",3,20,128,64,153],["A",9,74,128,97,153],["S",15,105,128,128,153],["D",21,138,128,161,153],["F",27,169,128,192,153],["G",33,201,128,224,153],["H",39,233,128,256,153],["J",45,265,128,288,153],["K",51,296,128,319,153],["L",57,330,128,353,153],[";",63,361,128,384,153],["'",69,393,128,416,153],["Enter",81,427,128,487,153],["4",87,513,127,536,152],["5",93,545,127,568,152],["6",99,576,127,599,152],
+["Shift",4,21,159,81,184],["Z",10,90,159,113,184],["X",16,121,159,144,184],["C",22,152,159,175,184],["V",28,186,159,209,184],["B",34,217,159,240,184],["N",40,251,159,274,184],["M",46,283,160,306,185],[",",52,314,160,337,185],[".",58,346,160,369,185],["/",64,378,160,401,185],["Shift",70,409,158,455,183],["↑",82,473,167,496,192],["1",88,512,160,535,185],["2",94,545,160,568,185],["3",100,577,160,600,185],["Enter",106,609,160,632,217],
+["Ctrl",5,20,191,48,216],["Win",11,59,191,87,216],["Alt",17,98,192,126,217],["Space",35,139,193,329,218],["Alt",53,337,192,360,217],["Fn",59,369,191,392,216],["Ctrl",65,400,190,423,215],["←",77,441,199,464,224],["↓",83,472,199,495,224],["→",89,504,199,527,224],["0",95,543,191,566,216],[".",101,577,192,600,217]];
 
 /* ---------- State ---------- */
 const DEF_LIGHT={mode:11,color:"#00a2ff",colorful:true,bright:5,speed:3,dir:0};
@@ -817,12 +818,11 @@ function renderInspector(){
 /* ---------- Per-key editor (layout depends on protocol) ---------- */
 let tool="paint", painting=false, kbMode=null;
 function keyDefs(){
-  if(kb?.family==="sino"){
-    return SINO_SLOTS.map((lab,s)=>{ const col=Math.floor(s/6), row=s%6;
-      return {label:lab||String(s), id:s, x:12+col*37, y:28+row*41, w:34, h:36, none:!lab}; });
-  }
+  if(kb?.family==="sino") return K980_LAYOUT.map(([label,id,x1,y1,x2,y2])=>({label, id, x:x1, y:y1, w:x2-x1, h:y2-y1}));
   return LAYOUT.map(([label,idx,x,y,w,h])=>({label, id:idx, x, y, w, h}));
 }
+const keyFrame=keys=>{ const p=6, x0=Math.min(...keys.map(k=>k.x))-p, y0=Math.min(...keys.map(k=>k.y))-p,
+  x1=Math.max(...keys.map(k=>k.x+k.w))+p, y1=Math.max(...keys.map(k=>k.y+k.h))+p; return {x0,y0,w:x1-x0,h:y1-y0}; };
 const perKeyStore=()=>kb?.family==="sino"?perKeySino:perKeyXvx;
 function buildKeyboard(){
   const mode=kb?.family==="sino"?"sino":"xvx";
@@ -831,14 +831,15 @@ function buildKeyboard(){
   $("pBrightWrap").hidden=mode!=="sino";
   $("pApply").disabled=!(fam==="xvx-wired"||fam==="sino");
   $("pNote").textContent=fam==="xvx-dongle"?"Per-key colors upload over the USB cable only — plug in the cable to send them."
-    : fam==="sino"?"Live preview: colors show as you paint but reset when the keyboard restarts — use “Lighting — saved in the keyboard” above for permanent lighting. Numbered keys have no LED on the reference board but can still be tried."
+    : fam==="sino"?"Live preview: colors show as you paint but reset when the keyboard restarts — use “Lighting — saved in the keyboard” above for permanent lighting. The keys match the K980 layout."
     : "Click or drag across keys to paint them.";
   if(kbMode===mode) return; kbMode=mode;
   const kbEl=$("kb"); kbEl.innerHTML="";
-  for(const k of keyDefs()){
+  const keys=keyDefs(), f=keyFrame(keys); kbEl.style.aspectRatio=`${f.w}/${f.h}`;
+  for(const k of keys){
     const el=document.createElement("div"); el.className="k"+(k.none?" none":""); el.dataset.i=k.id;
-    Object.assign(el.style,{left:((k.x-10)/780*100)+"%", top:((k.y-25)/250*100)+"%", width:(k.w/780*100)+"%", height:(k.h/250*100)+"%"});
-    el.textContent=k.label; el.title=mode==="sino"?`${k.label} (slot ${k.id})`:`${k.label} (LED ${k.id})`;
+    Object.assign(el.style,{left:((k.x-f.x0)/f.w*100)+"%", top:((k.y-f.y0)/f.h*100)+"%", width:(k.w/f.w*100)+"%", height:(k.h/f.h*100)+"%"});
+    el.textContent=k.label; el.title=`${k.label} (LED ${k.id})`;
     el.append(document.createElement("i")); kbEl.append(el);
   }
   kbEl.querySelectorAll(".k").forEach(paintKey);
