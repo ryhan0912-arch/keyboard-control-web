@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyboard Control</title>
+<meta name="description" content="Detect and control Xingmeng / XVX keyboards (K98, K980 and others) over USB cable, 2.4G dongle and Bluetooth, straight from the browser.">
+<style>
+:root{
+  --bg:#f4f5f7; --card:#ffffff; --text:#14171c; --muted:#5f6773; --line:#e2e5ea;
+  --accent:#1f8fd6; --accent-ink:#ffffff; --soft:#e8f3fb; --good:#1f9d55; --warn:#c77700; --bad:#c62828;
+  --key:#eceef2; --key-line:#cfd4db;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1216; --card:#171b21; --text:#e8ebef; --muted:#9aa3ae; --line:#2a3039;
+    --accent:#3aa6ea; --accent-ink:#06121b; --soft:#14283a; --good:#3ccf7d; --warn:#f0a030; --bad:#ef5350;
+    --key:#20262e; --key-line:#323a45;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1216; --card:#171b21; --text:#e8ebef; --muted:#9aa3ae; --line:#2a3039;
+  --accent:#3aa6ea; --accent-ink:#06121b; --soft:#14283a; --good:#3ccf7d; --warn:#f0a030; --bad:#ef5350;
+  --key:#20262e; --key-line:#323a45;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body:not(.adv) .advanced{display:none !important}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.bar{max-width:1020px;margin:0 auto;padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.bar h1{font-size:17px;margin:0;flex:1;min-width:160px}
+.bar h1 small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+main{max-width:1020px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.card.wide{grid-column:1/-1}
+.card h2{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:8px 14px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+button.small{padding:5px 10px;font-size:13.5px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row > label:first-child,.row > span:first-child{flex:1}
+.sub{color:var(--muted);font-size:13px}
+.row select{flex:0 1 170px;min-width:0}
+select,input[type=text]{font:inherit;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-width:0}
+input[type=range]{accent-color:var(--accent);width:100%;max-width:200px}
+input[type=color]{width:44px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--card);padding:2px;cursor:pointer}
+.switch{position:relative;width:44px;height:26px;flex:0 0 44px;display:inline-block}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:var(--line);border-radius:26px;transition:.15s;cursor:pointer}
+.switch span:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
+.switch input:checked+span{background:var(--accent)}
+.switch input:checked+span:before{transform:translateX(18px)}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--bad)}
+.dot.on{background:var(--good)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-variant-numeric:tabular-nums;word-break:break-word}
+.batt{background:var(--soft);border-radius:12px;padding:12px;margin-top:12px}
+.batt b{font-size:26px;display:block}
+.meter{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin:6px 0}
+.meter i{display:block;height:100%;background:var(--good);width:0}
+.notice{background:var(--soft);border-radius:12px;padding:12px 14px;font-size:14px}
+.notice.err{background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.notice p{margin:6px 0 0}
+.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.modes button{padding:9px 6px;font-size:13.5px}
+.modes button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.swatches{display:flex;gap:6px;flex-wrap:wrap}
+.swatches button{width:26px;height:26px;padding:0;border-radius:50%;border:2px solid var(--line)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:6px 12px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.kbwrap{overflow-x:auto;margin-top:12px;padding-bottom:4px}
+.kb{position:relative;width:100%;min-width:620px;aspect-ratio:780/250;background:var(--bg);border-radius:12px;user-select:none;touch-action:none}
+.kb .k{position:absolute;border:1px solid var(--key-line);border-radius:5px;background:var(--key);display:flex;align-items:center;justify-content:center;
+  font-size:10.5px;color:var(--text);cursor:crosshair;overflow:hidden;text-align:center;line-height:1.05;padding:1px}
+.kb .k i{position:absolute;left:0;right:0;bottom:0;height:5px}
+.kb .k:hover{outline:2px solid var(--accent)}
+.kb .k.none{opacity:.4;font-size:9px}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#log{font:12px/1.4 ui-monospace,Consolas,monospace;max-height:260px;overflow:auto;background:var(--bg);border-radius:8px;padding:8px;white-space:pre-wrap;margin-top:8px}
+.disabled-ui{opacity:.45;pointer-events:none}
+ul.devs{list-style:none;margin:10px 0 0;padding:0}
+ul.devs li{padding:8px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+ul.devs li.active b{color:var(--accent)}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:10px;background:var(--soft);color:var(--text);margin-left:4px}
+.tag.good{background:color-mix(in srgb,var(--good) 20%,transparent)}
+.mono{font:12.5px/1.45 ui-monospace,Consolas,monospace}
+.insp{margin:6px 0 0;padding:0;list-style:none}
+.insp li{padding:6px 0;border-top:1px solid var(--line)}
+.console{display:grid;grid-template-columns:auto auto auto 1fr;gap:8px;margin-top:10px;align-items:center}
+.console input[type=text]{width:100%}
+@media (max-width:560px){.console{grid-template-columns:1fr 1fr}.console input[type=text]{grid-column:1/-1}}
+details summary{cursor:pointer;color:var(--muted)}
+footer{max-width:1020px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);font-size:12.5px}
+footer a{color:inherit}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Keyboard Control<small id="devName">Not connected</small></h1>
+    <span class="status"><span class="dot" id="dot"></span><span id="connText">Disconnected</span></span>
+    <button id="themeBtn" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    <button id="addDevBtn" title="Choose any keyboard, 2.4G dongle or Bluetooth keyboard connected to this computer">+ Add keyboard</button>
+    <button class="primary" id="connectBtn">Connect</button>
+  </div>
+</header>
+
+<main>
+  <div class="card wide" id="introCard">
+    <div class="notice" id="notice">Looking for your keyboard…</div>
+  </div>
+
+  <section class="card wide" id="devCard" hidden>
+    <h2>Detected devices</h2>
+    <p class="sub" style="margin:0">Every device you've given this page access to. Click <b>+ Add keyboard</b> to add more — the list there shows <b>all</b> keyboards, dongles and Bluetooth devices, with no filter.</p>
+    <ul class="devs" id="devList"></ul>
+  </section>
+
+  <section class="card" id="infoCard">
+    <h2>Keyboard</h2>
+    <dl class="kv">
+      <dt>Name</dt><dd id="iModel">–</dd>
+      <dt>Connection</dt><dd id="iConn">–</dd>
+      <dt>Device ID</dt><dd id="iId">–</dd>
+      <dt>Protocol</dt><dd id="iProto">–</dd>
+    </dl>
+    <div class="batt" id="battBox">
+      <span class="sub">Battery</span><b id="batt">–</b>
+      <div class="meter"><i id="battMeter"></i></div>
+      <span class="sub" id="battNote">Over the 2.4G dongle the battery is read automatically. Over Bluetooth, use the button below.</span>
+      <div style="margin-top:8px"><button class="small" id="btBatt">Read battery over Bluetooth</button></div>
+    </div>
+  </section>
+
+  <section class="card ctl xvx" id="setCard">
+    <h2>Settings</h2>
+    <div class="row"><label for="sWin">Lock Windows key</label><label class="switch"><input type="checkbox" id="sWin"><span></span></label></div>
+    <div class="row"><label for="sAltF4">Disable Alt + F4</label><label class="switch"><input type="checkbox" id="sAltF4"><span></span></label></div>
+    <div class="row"><label for="sAltTab">Disable Alt + Tab</label><label class="switch"><input type="checkbox" id="sAltTab"><span></span></label></div>
+    <div class="row"><label for="sFn">Fn swap<div class="sub">F1–F12 act as media keys without Fn</div></label><label class="switch"><input type="checkbox" id="sFn"><span></span></label></div>
+    <div class="row"><label for="sSleep">Sleep after</label>
+      <select id="sSleep"><option value="0">Never</option><option value="1">1 minute</option><option value="2">5 minutes</option><option value="3">30 minutes</option></select></div>
+    <div class="row"><label for="sResp">Key response time<div class="sub" id="respHint"></div></label>
+      <select id="sResp"><option value="0">Level 1 (fastest)</option><option value="1">Level 2</option><option value="2">Level 3</option><option value="3">Level 4</option><option value="4">Level 5 (most debounce)</option></select></div>
+    <div class="row"><span>Clock<div class="sub">Set the keyboard's clock to this computer's time</div></span><button id="syncTime">Sync time</button></div>
+  </section>
+
+  <section class="card wide ctl xvx" id="lightCard">
+    <h2>Lighting</h2>
+    <div class="modes" id="modes"></div>
+    <div class="row" style="margin-top:12px;border-top:1px solid var(--line)"><span>Color</span>
+      <div class="tools"><div class="swatches" id="swatches"></div><input type="color" id="lColor" value="#00a2ff" aria-label="Custom color"></div></div>
+    <div class="row"><label for="lColorful">Colorful (rainbow colors instead of one color)</label><label class="switch"><input type="checkbox" id="lColorful"><span></span></label></div>
+    <div class="row"><label for="lBright">Brightness <output id="oBright"></output></label><input type="range" id="lBright" min="0" max="5" step="1"></div>
+    <div class="row"><label for="lSpeed">Speed <output id="oSpeed"></output></label><input type="range" id="lSpeed" min="0" max="5" step="1"></div>
+    <div class="row"><span>Direction</span><div class="seg" id="lDir">
+      <button data-v="0" title="Direction 1">→</button><button data-v="1" title="Direction 2">←</button><button data-v="2" title="Direction 3">↑</button><button data-v="3" title="Direction 4">↓</button></div></div>
+    <p class="sub" style="margin:8px 0 0">Changes are sent to the keyboard as you make them.</p>
+  </section>
+
+  <section class="card wide" id="relayCard" hidden>
+    <div class="notice"><b>To change the lighting, connect the USB cable.</b>
+      Your K980 is connected <span id="relayHow">through the 2.4G dongle</span>, which only carries key presses — lighting can only be set over the cable
+      (Xinmeng's own driver works the same way).
+      <ol style="margin:8px 0 0;padding-left:20px">
+        <li>Plug the USB cable into the keyboard and this PC.</li>
+        <li>Slide the keyboard's mode switch to <b>wired / USB</b>.</li>
+        <li>The controls below unlock by themselves. What you choose is saved in the keyboard and stays in 2.4G and Bluetooth mode.</li>
+      </ol></div>
+  </section>
+
+  <section class="card wide" id="sinoCard" hidden>
+    <h2>Lighting — saved in the keyboard</h2>
+    <div id="sControls">
+    <div class="row" style="padding-top:0"><span>Presets</span><div class="tools" id="sPresets"></div></div>
+    <div class="modes" id="sModes" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:12px;border-top:1px solid var(--line)"><span>Color</span>
+      <div class="seg" id="sColors" style="flex-wrap:wrap"></div></div>
+    <div class="row"><label for="sBright">Brightness <output id="osBright"></output></label><input type="range" id="sBright" min="0" max="4" step="1"></div>    <div class="row"><label for="sSpeed">Speed <output id="osSpeed"></output></label><input type="range" id="sSpeed" min="0" max="4" step="1"></div>
+    <div class="tools" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+      <button class="primary" id="sApply" disabled>Apply</button>
+      <button id="sRevert" disabled>Undo changes</button>
+      <span class="sub" id="sDirty"></span>
+    </div>
+    </div>
+    <p class="sub" style="margin:8px 0 0" id="sStatus">Pick an effect, color or preset, then press Apply. It's saved in the keyboard and stays in 2.4G and Bluetooth mode.</p>
+  </section>
+
+  <section class="card wide" id="perKeyCard">
+    <h2>Per-key colors</h2>
+    <div class="tools">
+      <input type="color" id="pColor" value="#ff2d55" aria-label="Paint color">
+      <div class="seg" id="pTool"><button data-v="paint" aria-pressed="true">Paint</button><button data-v="erase">Erase</button></div>
+      <button id="pFill">Fill all</button>
+      <button id="pClear">Clear</button>
+      <label class="sub" id="pBrightWrap" hidden>Brightness <input type="range" id="pBright" min="5" max="100" step="5" value="100" style="width:110px;vertical-align:middle"></label>
+      <button class="primary" id="pApply">Send to keyboard</button>
+      <span class="sub" id="pNote">Click or drag across keys to paint them.</span>
+    </div>
+    <div class="kbwrap"><div class="kb" id="kb"></div></div>
+  </section>
+
+  <section class="card wide advanced" id="inspCard">
+    <h2>Device inspector &amp; command console</h2>
+    <p class="sub" style="margin:0">Shows every HID interface of the selected device. For keyboards whose commands aren't built in yet, you can send raw reports here.</p>
+    <ul class="insp mono" id="insp"><li class="sub">No device selected.</li></ul>
+    <details style="margin-top:8px">
+      <summary>Raw command console (advanced — sending unknown bytes is at your own risk)</summary>
+      <div class="console">
+        <select id="cIface" aria-label="Interface"></select>
+        <select id="cType" aria-label="Report type"><option value="feature">Feature</option><option value="output">Output</option></select>
+        <input type="text" id="cId" value="0" size="4" aria-label="Report ID (hex)" title="Report ID (hex)">
+        <input type="text" id="cData" placeholder="Bytes in hex, e.g. 04 18" aria-label="Data bytes (hex)">
+      </div>
+      <div class="tools" style="margin-top:8px">
+        <button class="small" id="cSend">Send report</button>
+        <button class="small" id="cRead">Read feature report</button>
+        <span class="sub">Replies and input reports appear in the log below.</span>
+      </div>
+    </details>
+  </section>
+
+  <section class="card wide advanced">
+    <details id="logBox">
+      <summary>Communication log</summary>
+      <div class="tools" style="margin-top:8px"><button class="small" id="copyLog">Copy log</button><button class="small" id="clearLog">Clear</button></div>
+      <div id="log"></div>
+    </details>
+  </section>
+</main>
+<footer>
+  Unofficial tool for XINMENG (新盟) K980 and similar keyboards. Not affiliated with any keyboard maker.
+  Uses WebHID — Chrome or Edge on a desktop computer. <a href="https://github.com/ryhan0912-arch/keyboard-control-web">Source code</a> ·
+  <a href="#" id="advToggle">Show advanced tools</a>
+</footer>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,"0")).join(" ");
+const h16=n=>n.toString(16).padStart(4,"0").toUpperCase();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ======================================================================
+   Protocol families. Detection is by each device's own HID report layout,
+   not by a fixed list of USB IDs, so any keyboard can be picked.
+   - xvx-wired : Xingmeng/XVX K98-driver keyboards on the cable (64-byte feature reports)
+   - xvx-dongle: same keyboards through the 2.4G dongle or Bluetooth (32-byte output reports + checksum)
+   - sino      : Sinowealth keyboards (e.g. 258A:0049) — per-key colors via feature report 0x08
+   - generic   : anything else — inspector + raw command console
+   ====================================================================== */
+const XVX_IDS=[[0x05AC,0x024F]];
+const NAME_HINT=/xing|xvx|k98|k980|keyboard|kbd|newmen/i;
+
+/* Known keyboards. Only these are shown and auto-connected (Shift+click "+ Add keyboard" to pick any other device).
+   Xingmeng K980 — verified on a real keyboard: keystrokes in 2.4G mode come from 25A7:FA70, and 258A:0049
+   disappears when the keyboard leaves cable mode. */
+const PROFILES=[
+  {model:"XINMENG K980", bus:"usb",       family:"sino",       test:d=>d.vendorId===0x258A && d.productId===0x0049},
+  {model:"XINMENG K980", bus:"dongle",    family:"k980-relay", test:d=>d.vendorId===0x25A7 && d.productId===0xFA70},
+  {model:"XINMENG K980", bus:"bluetooth", family:"k980-relay", test:d=>/k980/i.test(d.productName||"") || (d.vendorId===0x000E && d.productId===0x3412)},
+  {model:"Xingmeng K98",  bus:null,        family:null,         test:d=>d.vendorId===0x05AC && d.productId===0x024F},
+];
+const REQUEST_FILTERS=[{vendorId:0x258A,productId:0x0049},{vendorId:0x25A7,productId:0xFA70},{vendorId:0x000E,productId:0x3412},{vendorId:0x05AC,productId:0x024F}];
+const profileOf=g=>PROFILES.find(p=>g.some(p.test))||null;
+let showAll=false;
+
+const MODES=[
+  [1,"Static"],[2,"Reactive on"],[3,"Reactive off"],[4,"Glittering"],[5,"Falling"],[6,"Colorful"],[7,"Breathing"],
+  [8,"Spectrum"],[9,"Outward"],[10,"Scrolling"],[11,"Rolling"],[12,"Rotating"],[13,"Explode"],[14,"Launch"],
+  [15,"Ripples"],[16,"Flowing"],[17,"Pulsating"],[18,"Tilt"],[19,"Shuttle"],[0x80,"Per-key"],[0,"Off"]
+];
+const SWATCHES=["#ffffff","#ff0000","#ff7a00","#ffd400","#00ff3c","#00e5ff","#0050ff","#a000ff","#ff00a8"];
+
+/* K98 layout: [label, light_index, x, y, w, h] in the vendor driver's 800x300 coordinates */
+const LAYOUT=[["Esc",1,18,31,30,30],["F1",2,69,31,30,30],["F2",3,109,31,30,30],["F3",4,149,31,30,30],["F4",5,189,31,30,30],["F5",6,238,31,30,30],["F6",7,278,31,30,30],["F7",8,318,31,30,30],["F8",9,358,31,30,30],["F9",10,407,31,30,30],["F10",11,446,31,30,30],["F11",12,487,31,30,30],["F12",13,526,31,30,30],["Ins",116,630,31,30,30],["Home",117,670,31,30,30],["PgUp",118,709,31,30,30],["PgDn",121,749,31,30,30],
+["`",19,18,81,30,30],["1",20,58,81,30,30],["2",21,98,81,30,30],["3",22,138,81,30,30],["4",23,178,81,30,30],["5",24,218,81,30,30],["6",25,257,81,30,30],["7",26,297,81,30,30],["8",27,337,81,30,30],["9",28,377,81,30,30],["0",29,417,81,30,30],["-",30,456,81,30,30],["=",31,496,81,30,30],["Backspace",103,538,81,68,30],["Num",32,630,81,30,30],["/",33,670,81,30,30],["*",34,709,81,30,30],["-",122,749,81,30,30],
+["Tab",37,18,121,49,30],["Q",38,78,121,30,30],["W",39,119,121,30,30],["E",40,158,121,30,30],["R",41,198,121,30,30],["T",42,238,121,30,30],["Y",43,278,121,30,30],["U",44,317,121,30,30],["I",45,357,121,30,30],["O",46,397,121,30,30],["P",47,437,121,30,30],["[",48,477,121,30,30],["]",49,516,121,30,30],["\\",67,556,121,50,30],["7",50,630,121,30,30],["8",51,670,121,30,30],["9",52,709,121,30,30],["+",123,749,121,30,70],
+["Caps",55,18,161,61,30],["A",56,88,161,30,30],["S",57,128,161,30,30],["D",58,168,161,30,30],["F",59,208,161,30,30],["G",60,248,161,30,30],["H",61,287,161,30,30],["J",62,327,161,30,30],["K",63,367,161,30,30],["L",64,406,161,30,30],[";",65,446,161,30,30],["'",66,486,161,30,30],["Enter",85,527,161,78,30],["4",68,630,161,30,30],["5",69,670,161,30,30],["6",70,709,161,30,30],
+["Shift",73,18,200,80,30],["Z",74,109,200,30,30],["X",75,149,200,30,30],["C",76,189,200,30,30],["V",77,229,200,30,30],["B",78,268,200,30,30],["N",79,308,200,30,30],["M",80,348,200,30,30],[",",81,388,200,30,30],[".",82,427,200,30,30],["/",83,467,200,30,30],["Shift",84,507,200,59,30],["↑",101,576,200,30,30],["1",86,630,200,30,30],["2",87,670,200,30,30],["3",88,709,200,30,30],["Enter",106,749,200,30,70],
+["Ctrl",91,18,240,40,30],["Win",92,69,240,40,30],["Alt",93,119,240,40,30],["Space",94,171,240,235,30],["Alt",95,417,240,40,30],["Fn",96,466,240,40,30],["←",99,536,240,30,30],["↓",100,576,240,30,30],["→",102,615,240,30,30],["0",104,670,240,30,30],[".",105,709,240,30,30]];
+
+/* Sinowealth per-key slots: 21 columns x 6 rows, slot = column*6 + row ("" = no LED on the reference board) */
+const SINO_SLOTS=["Esc","`","Tab","Caps","Shift","Ctrl", "","1","Q","A","Z","Win", "F1","2","W","S","X","Alt", "F2","3","E","D","C","",
+ "F3","4","R","F","V","", "F4","5","T","G","B","Space", "F5","6","Y","H","N","", "F6","7","U","J","M","",
+ "F7","8","I","K",",","Alt", "F8","9","O","L",".","Fn", "F9","0","P",";","/","Menu", "F10","-","[","'","","Ctrl",
+ "F11","=","]","","","", "F12","Bksp","\\","Enter","Shift","Ctrl", "PrtSc","Ins","Del","","","←", "ScrLk","Home","End","","↑","↓",
+ "Pause","PgUp","PgDn","","","→", "Mute","Num","7","4","1","0", "Calc","/","8","5","2","", "Lock","*","9","6","3",".",
+ "Desk","-","+","","Enter",""];
+
+/* ---------- State ---------- */
+const DEF_LIGHT={mode:11,color:"#00a2ff",colorful:true,bright:5,speed:3,dir:0};
+const DEF_SET={win:false,altf4:false,alttab:false,fn:false,sleep:2,resp:1};
+const store={
+  get(k,d){ try{ const v=localStorage.getItem(k); return v?(typeof d==="object"&&!Array.isArray(d)?{...d,...JSON.parse(v)}:JSON.parse(v)):structuredClone(d); }catch{ return structuredClone(d); } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
+};
+let L=store.get("light",DEF_LIGHT), S=store.get("settings",DEF_SET);
+let perKeyXvx=store.get("perkey",{}), perKeySino=store.get("perkeySino",{});
+let kb=null;           // {group, dev, family, rid, len, name}
+let groups=[];         // all granted devices grouped by physical device
+let userDisconnected=false, battTimer=null, echoSeen=false, busy=Promise.resolve();
+let lastBtDevice=null;
+
+/* ---------- Log / notices ---------- */
+function log(dir, bytes, note=""){
+  const el=$("log"); const t=new Date().toLocaleTimeString();
+  el.textContent+=`${t} ${dir} ${bytes?hex(bytes):""}${note?"  "+note:""}\n`;
+  if(el.textContent.length>80000) el.textContent=el.textContent.slice(-50000);
+  el.scrollTop=el.scrollHeight;
+}
+function notice(html, err=false){ const n=$("notice"); n.innerHTML=html; n.classList.toggle("err",err); $("introCard").hidden=false; }
+function setStatus(t,on){ $("connText").textContent=t; $("dot").classList.toggle("on",!!on); }
+
+/* ---------- HID helpers ---------- */
+function reports(d, kind){ // -> [{id, bytes, page, usage}]
+  const out=[];
+  for(const c of d.collections||[]) for(const r of (c[kind]||[]))
+    out.push({id:r.reportId, bytes:(r.items||[]).reduce((s,i)=>s+i.reportSize*i.reportCount,0)/8, page:c.usagePage, usage:c.usage});
+  return out;
+}
+const isKeyboardDev=d=>(d.collections||[]).some(c=>c.usagePage===1 && c.usage===6);
+const isDongleName=n=>/dongle|2\.4|receiver|wireless/i.test(n||"");
+const isXvxId=d=>XVX_IDS.some(([v,p])=>d.vendorId===v && d.productId===p);
+function guessBus(g){
+  const d=g[0], n=d.productName||"";
+  if(/\b5\.\d\b|bluetooth|\bBT\b|\bble\b/i.test(n) && !/receiver|dongle/i.test(n) && (d.vendorId<0x0100 || /\b5\.\d\b/.test(n))) return "bluetooth";
+  if(isDongleName(n)) return "dongle";
+  return "usb";
+}
+function classify(g){
+  const name=g[0].productName||"";
+  let wired=null, dongle=null, sino=null;
+  for(const d of g){
+    const f64=reports(d,"featureReports").find(r=>r.bytes===64);
+    if(f64 && !wired) wired={dev:d, family:"xvx-wired", rid:f64.id, len:64};
+    const o32=reports(d,"outputReports").find(r=>r.bytes===32);
+    if(o32 && !dongle) dongle={dev:d, family:"xvx-dongle", rid:o32.id, len:32};
+    const f8=reports(d,"featureReports").find(r=>r.id===0x08 && r.bytes>=200);
+    if(f8 && !sino) sino={dev:d, family:"sino", rid:8, len:f8.bytes};
+  }
+  const prof=profileOf(g);
+  const bus=prof?.bus || guessBus(g);
+  let c=null;
+  if(prof?.family==="k980-relay"){
+    const v=g.find(d=>(d.collections||[]).some(c=>c.usagePage>=0xFF00)) || g[0];
+    c={dev:v, family:"k980-relay", rid:0, len:0};
+  }
+  else if(sino && !isXvxId(g[0])) c=sino;
+  else if(dongle && (bus!=="usb" || isDongleName(name) || !wired)) c=dongle;
+  else if(wired) c=wired;
+  else if(dongle) c=dongle;
+  else if(sino) c=sino;
+  else{
+    // Generic: prefer a vendor-defined interface for the console, else the first one.
+    const v=g.find(d=>(d.collections||[]).some(c=>c.usagePage>=0xFF00)) || g[0];
+    c={dev:v, family:"generic", rid:0, len:0};
+  }
+  return {...c, bus};
+}
+function groupDevices(list){
+  const m=new Map();
+  for(const d of list){ const k=`${d.vendorId}:${d.productId}:${d.productName}`; if(!m.has(k)) m.set(k,[]); m.get(k).push(d); }
+  return [...m.values()];
+}
+const gid=g=>`${g[0].vendorId}:${g[0].productId}:${g[0].productName}`;
+const idStr=d=>h16(d.vendorId)+":"+h16(d.productId);
+function score(g){ // higher = more likely the user's keyboard
+  const c=classify(g), n=g[0].productName||"", p=profileOf(g);
+  // Prefer the connection that is actually in use: the cable interface only exists in cable mode,
+  // the Bluetooth device only while paired; the dongle can stay plugged in while unused.
+  return (p?200:0)+(p?({usb:30,bluetooth:20,dongle:10}[c.bus]||0):0)+(c.family!=="generic"?100:0)+(isXvxId(g[0])?50:0)+(/xing|xvx|k98|k980/i.test(n)?40:0)+(isKeyboardDev(g[0])||g.some(isKeyboardDev)?20:0)+(NAME_HINT.test(n)?10:0);
+}
+const FAMILY_TEXT={"xvx-wired":"XVX / K98 protocol (cable)","xvx-dongle":"XVX / K98 protocol (wireless)","sino":"Sinowealth — saved lighting + per-key RGB","k980-relay":"Wireless link — lighting is set over the cable","generic":"Basic — inspector & console only"};
+const BUS_TEXT={usb:"USB cable",dongle:"2.4G wireless dongle",bluetooth:"Bluetooth"};
+
+/* ---------- XVX wired protocol (64-byte feature reports) ---------- */
+async function feat(bytes, read){
+  const d=new Uint8Array(64); d.set(bytes.slice(0,64));
+  await kb.dev.sendFeatureReport(kb.rid, d); log("→", d);
+  if(read){
+    try{ const r=await kb.dev.receiveFeatureReport(kb.rid); log("←", new Uint8Array(r.buffer, r.byteOffset, r.byteLength)); }
+    catch(e){ log("!", null, "read: "+e.message); }
+  }
+  await sleep(35);
+}
+const header=(cmd,pages)=>[0x04,cmd,0,0,0,0,0,0,pages];
+async function wiredLighting(l){
+  const [r,g,b]=rgb(l.color), p=new Uint8Array(64);
+  p[0]=l.mode;
+  if(l.mode!==0){ p[1]=r; p[2]=g; p[3]=b; p[8]=l.colorful?1:0; p[9]=l.bright; p[10]=l.speed; p[11]=l.dir; }
+  p[14]=0xAA; p[15]=0x55;
+  await feat([0x04,0x18],true); await feat(header(0x13,1),true); await feat(p,false);
+  await feat([0x04,0x02],true); await feat([0x04,0xF0],false);
+}
+async function wiredSettings(s){
+  const p=new Uint8Array(64);
+  p[1]=1; p[2]=+s.win; p[3]=+s.altf4; p[4]=+s.alttab; p[5]=+s.fn; p[6]=s.sleep; p[8]=s.resp; p[62]=0xAA; p[63]=0x55;
+  await feat([0x04,0x18],true); await feat([0x04,0x17,1,0,0,0,0,0,1],true); await feat(p,false); await feat([0x04,0x02],true);
+}
+async function wiredTime(){
+  const t=new Date(), p=new Uint8Array(64);
+  p[1]=1; p[2]=0x5A; p[3]=t.getFullYear()%2000; p[4]=t.getMonth()+1; p[5]=t.getDate();
+  p[6]=t.getHours(); p[7]=t.getMinutes(); p[8]=t.getSeconds(); p[10]=t.getDay(); p[62]=0xAA; p[63]=0x55;
+  await feat([0x04,0x18],true); await feat(header(0x28,1),true); await feat(p,true); await feat([0x04,0x02],true);
+}
+async function wiredPerKey(){
+  const buf=new Uint8Array(9*64);
+  for(const [, idx] of LAYOUT){ const c=perKeyXvx[idx]; const [r,g,b]=c?rgb(c):[0,0,0]; buf.set([idx,r,g,b], idx*4); }
+  buf[buf.length-2]=0xAA; buf[buf.length-1]=0x55;
+  await feat([0x04,0x18],true); await feat(header(0x23,9),true);
+  for(let i=0;i<9;i++) await feat(buf.slice(i*64,i*64+64),false);
+  await feat([0x04,0x02],true); await feat([0x04,0xF0],false);
+}
+
+/* ---------- XVX wireless protocol (32-byte output reports, sum checksum in last byte) ---------- */
+let waiter=null;
+function onInput(e){
+  let d=new Uint8Array(e.data.buffer, e.data.byteOffset, e.data.byteLength);
+  if(e.reportId) d=Uint8Array.of(e.reportId, ...d);
+  log("←", d, e.device!==kb?.dev?`(${e.device.productName} input)`:"");
+  if(waiter && e.device===kb?.dev){
+    if(d[0]===waiter.cmd) waiter.done(d);
+    else if(d[0]===0 && d[1]===waiter.cmd) waiter.done(d.slice(1));
+  }
+}
+function waitEcho(cmd, ms){
+  return new Promise(res=>{
+    const t=setTimeout(()=>{ waiter=null; res(null); }, ms);
+    waiter={cmd, done:d=>{ clearTimeout(t); waiter=null; echoSeen=true; res(d); }};
+  });
+}
+async function out(bytes){
+  const d=new Uint8Array(32); d.set(bytes.slice(0,31));
+  let s=0; for(let i=0;i<31;i++) s+=d[i]; d[31]=s&0xFF;
+  const tries=echoSeen?3:1;
+  for(let i=0;i<tries;i++){
+    const p=waitEcho(d[0], 350);
+    await kb.dev.sendReport(kb.rid, d); log("→", d);
+    const r=await p; if(r) return r;
+  }
+  return null;
+}
+async function dongleLighting(l){
+  const [r,g,b]=rgb(l.color), d=new Array(31).fill(0);
+  d[0]=0x05; d[1]=0x10; d[3]=l.mode;
+  if(l.mode!==0){ d[4]=r; d[5]=g; d[6]=b; d[11]=l.colorful?1:0; d[12]=l.bright; d[13]=l.speed; d[14]=l.dir; }
+  d[17]=0xAA; d[18]=0x55;
+  await out(d); await sleep(40); await out([0x0F]);
+}
+async function dongleSettings(s){
+  const d=new Array(31).fill(0);
+  d[0]=0x07; d[1]=0x10; d[4]=1; d[5]=+s.win; d[6]=+s.altf4; d[7]=+s.alttab; d[8]=+s.fn; d[9]=s.sleep; d[11]=s.resp; d[17]=0xAA; d[18]=0x55;
+  await out(d); await sleep(40); await out([0x0F]);
+}
+async function dongleTime(){
+  const t=new Date(), d=new Array(31).fill(0);
+  d[0]=0x0C; d[1]=0x10; d[4]=1; d[5]=0x5A; d[6]=t.getFullYear()%2000; d[7]=t.getMonth()+1; d[8]=t.getDate();
+  d[9]=t.getHours(); d[10]=t.getMinutes(); d[11]=t.getSeconds(); d[13]=t.getDay(); d[17]=0xAA; d[18]=0x55;
+  await out(d);
+}
+async function readBattery(){
+  if(!kb || kb.family!=="xvx-dongle") return;
+  const r=await queue(()=>out([0x20,0x01])).catch(()=>null);
+  if(r && r[0]===0x20) showBattery(Math.min(100, r[3]), "keyboard");
+  else $("battNote").textContent="No reply — the keyboard may be asleep. Press any key to wake it.";
+}
+function showBattery(v, src){
+  $("batt").textContent=v+"%"; $("battMeter").style.width=v+"%";
+  $("battMeter").style.background=v<=20?"var(--bad)":v<=40?"var(--warn)":"var(--good)";
+  $("battNote").textContent=`From ${src} · updated ${new Date().toLocaleTimeString()}`;
+}
+
+/* ---------- Sinowealth per-key protocol (feature report 0x08) ---------- */
+async function sinoSend(){
+  const k=$("pBright").value/100;
+  const d=new Uint8Array(kb.len);           // data after the report ID
+  d.set([0x0A,0x7A,0x01]);
+  for(let s=0;s<126 && 3+s*3+2<d.length;s++){
+    const c=perKeySino[s]; if(!c) continue;
+    const [r,g,b]=rgb(c); d[3+s*3]=Math.round(r*k); d[4+s*3]=Math.round(g*k); d[5+s*3]=Math.round(b*k);
+  }
+  await kb.dev.sendFeatureReport(8, d); log("→", d.slice(0,48), `(report 08, ${d.length} bytes, first 48 shown)`);
+}
+/* ---------- Sinowealth saved lighting (onboard config, feature reports 0x05 + 0x06) ----------
+   Read-modify-write: ask for a config page with report 05 [0x80|op, page, 0, len, 0], read it back as
+   report 06 (1032 bytes incl. ID), change only the lighting bytes, clear the 0x80 read flag and write it back.
+   Nothing is written unless the page read back has the expected header, so other settings are never overwritten.
+   Layout from OpenRGB's 258A:0049 controller and the Redragon K617 driver (same HID descriptor as the K980). */
+/* Verified on a real XINMENG K980 (XM-K980, cable = 258A:0049), cross-checked with the open-source
+   K980 WebHID driver (SinoWealth BYK916 protocol):
+   - request: feature 05 [83 B6 00 00 00]  ->  feature 06 = 1032 bytes "06 83 B6 … 5A A5 03 03 …"
+   - lighting block at full index 16 (second copy at 139 when [139..140] = 03 03; both are updated)
+     block+4 = game-mode flag, block+5 = effect code (0 = off),
+     block+22+2i / +23+2i = color index / (speed<<4 | brightness) for effect i+1
+   - colors (confirmed on the keyboard): 0 red, 1 green, 2 blue, 3 yellow, 4 magenta, 5 cyan, 6 white, 7 rainbow
+   - write: feature 05 [83 B6 00 00 00], then IMMEDIATELY feature 06 with the 1032 bytes ([1] = 03).
+     A GET between the 05 command and the 06 write makes the keyboard store the data without applying it
+     (it reads back fine but the LEDs don't change) — confirmed on the keyboard. */
+/* Official names and options from Xinmeng's K980 tri-mode driver (Cfg.ini LedOpt: speed, brightness, direction, random, color) */
+const SINO_NAMES={1:"Fixed on",2:"Respire",3:"Rainbow",4:"Flash away",5:"Raindrops",6:"Rainbow wheel",7:"Ripples shining",
+  8:"Stars twinkle",9:"Shadow disappear",10:"Retro snake",11:"Neon stream",12:"Reaction",13:"Sine wave",14:"Retinue scanning",
+  15:"Rotating windmill",16:"Colorful waterfall",17:"Blossoming",18:"Rotating storm",19:"Collision",20:"Perfect",21:"Game mode",0:"Off"};
+const SINO_CAPS=m=>({speed:m>=2&&m<=20, light:m>=1&&m<=20, color:m>=1&&m<=20&&![3,15,16,17].includes(m)});
+const SINO_ORDER=[...Array(21)].map((_,i)=>i+1).concat([0]);
+const SINO_COLORS=[["Red","#ff2020"],["Green","#20d040"],["Blue","#2060ff"],["Yellow","#ffd400"],["Magenta","#ff30d0"],["Cyan","#00d8ff"],["White","#ffffff"],["Rainbow","linear-gradient(90deg,#f33,#fd0,#3d5,#29f,#c3f)"]];
+const PAGE_MODE={op:0x03, page:0xB6, len:0x00};
+const BLOCK1=16, BLOCK2=139;
+const slotC=(base,code)=>base+22+2*(code-1), slotA=(base,code)=>base+23+2*(code-1);
+let SL=store.get("sinoLight3",{mode:1,color:7,bright:4,speed:3}), sinoLoaded=false;
+const sinoCfgDev=()=>kb.group.find(d=>reports(d,"featureReports").some(r=>r.id===6 && r.bytes>=1000)) || kb.dev;
+async function sinoRead(){
+  const d=sinoCfgDev(), p=PAGE_MODE;
+  await d.sendFeatureReport(5, Uint8Array.of(0x80|p.op, p.page, 0x00, p.len, 0x00));
+  log("→", Uint8Array.of(5,0x80|p.op,p.page,0,p.len,0), "(request lighting config)");
+  await sleep(40);
+  const r=await d.receiveFeatureReport(6);
+  let b=new Uint8Array(r.buffer, r.byteOffset, r.byteLength);
+  if(b[0]!==6) b=Uint8Array.of(6, ...b);
+  b=b.slice(); log("←", b.slice(0,160), `(${b.length} bytes, first 160 shown)`);
+  if(!((b[1]&0x7F)===p.op && b[2]===p.page && b[14]===0x5A && b[15]===0xA5 && b[16]===0x03 && b[17]===0x03))
+    throw new Error("The lighting config didn't look as expected — nothing was written.");
+  return b;
+}
+async function sinoWrite(b){
+  const d=sinoCfgDev(), p=PAGE_MODE; b[1]=p.op;
+  // Send exactly the size the keyboard declares for report 06 (1031 data bytes), whatever length the read returned.
+  const want=reports(d,"featureReports").find(r=>r.id===6)?.bytes || 1031;
+  const data=new Uint8Array(want); data.set(b.slice(1, 1+want));
+  log("•", null, `write: read gave ${b.length} bytes incl. ID, sending ${want} data bytes`);
+  // The 05 command must come right before the 06 write (no read in between) or the keyboard won't apply it.
+  await d.sendFeatureReport(5, Uint8Array.of(0x80|p.op, p.page, 0x00, p.len, 0x00));
+  log("→", Uint8Array.of(5,0x80|p.op,p.page,0,p.len,0), "(start lighting write)");
+  await sleep(20);
+  try{
+    await d.sendFeatureReport(6, data); log("→", data.slice(0,160), "(write lighting config)");
+  }catch(e){
+    // Fallback: some setups refuse the write right after the start command — retry the way the open-source K980 driver does.
+    log("!", null, `write after start command failed: ${e.name}: ${e.message} — retrying without it`);
+    await sleep(300);
+    await d.sendFeatureReport(6, data); log("→", data.slice(0,160), "(write lighting config, retry)");
+  }
+  await sleep(300);
+}
+const blocks=b=>[BLOCK1].concat(b[BLOCK2]===0x03 && b[BLOCK2+1]===0x03 ? [BLOCK2] : []);
+function applyTo(b){
+  const game=SL.mode===21, code=game?1:SL.mode;
+  for(const base of blocks(b)){
+    b[base+4]=game?1:0; b[base+5]=code;
+    if(code>0 && !game){
+      const c=slotC(base,code), a=slotA(base,code);
+      if(!(b[c]===0xFF && b[a]===0xFF)){ b[c]=SL.color; b[a]=(SL.speed<<4)|SL.bright; }
+    }
+  }
+  return b;
+}
+async function sinoLoad(){   // show what the keyboard currently has
+  try{
+    const m=await sinoRead();
+    const flag=m[BLOCK1+4], code=m[BLOCK1+5];
+    SL.mode=flag===1?21:code;
+    if(code>=1 && code<=29 && !(m[slotC(BLOCK1,code)]===0xFF)){
+      const v=m[slotA(BLOCK1,code)]; SL.speed=Math.min(4,v>>4); SL.bright=Math.min(4,v&15); SL.color=Math.min(7,m[slotC(BLOCK1,code)]);
+    }
+    sinoLoaded=true; store.set("sinoLight3",SL);
+    $("sStatus").textContent="Showing the lighting saved in your keyboard. Pick an effect, color or preset, then press Apply.";
+    setDirty(false);
+  }catch(e){
+    sinoLoaded=false; log("!", null, e.message);
+    $("sStatus").textContent="Couldn't read the keyboard's saved lighting ("+e.message+") — saving is disabled to keep your keyboard safe. Send me the log.";
+  }
+  buildSinoModes(); renderSino();
+}
+async function sinoSave(){
+  if(!sinoLoaded){ $("sStatus").textContent="Saving is disabled because the keyboard's lighting couldn't be read."; return; }
+  const want=applyTo(await sinoRead());
+  await sinoWrite(want.slice());
+  const v=await sinoRead();
+  let ok=true; for(let i=16;i<262;i++) if(v[i]!==want[i]) ok=false;
+  $("sStatus").textContent=ok?`Applied and saved to keyboard ✓ (${new Date().toLocaleTimeString()})`:"Sent, but the keyboard didn't confirm the change. Send me the log.";
+  if(ok) setDirty(false);
+}
+/* Choices are staged until Apply is pressed. */
+const SINO_PRESETS=[
+  ["Solid white",   {mode:1, color:6, bright:4, speed:3}],
+  ["Red breathing", {mode:2, color:0, bright:4, speed:2}],
+  ["Calm blue",     {mode:2, color:2, bright:2, speed:1}],
+  ["Rainbow wave",  {mode:3, color:7, bright:4, speed:3}],
+  ["Neon stream",   {mode:11,color:7, bright:4, speed:3}],
+  ["Cyan ripples",  {mode:7, color:5, bright:4, speed:3}],
+  ["Reactive",      {mode:12,color:7, bright:4, speed:3}],
+  ["Lights off",    {mode:0}],
+];
+let sinoDirty=false;
+function setDirty(v){
+  sinoDirty=v;
+  $("sApply").disabled=!v || kb?.family!=="sino"; $("sRevert").disabled=!v || kb?.family!=="sino";
+  $("sDirty").textContent=v?"Not applied yet — press Apply to send it to the keyboard.":"";
+}
+const queueSinoSave=()=>{ store.set("sinoLight3",SL); renderSino(); setDirty(true); };
+async function sinoApply(){
+  const b=$("sApply"); b.disabled=true; b.textContent="Applying…";
+  try{ await queue(sinoSave); }
+  catch(e){ $("sStatus").textContent=`Not saved — the keyboard refused the change (${e.name}: ${e.message}). Nothing on the keyboard was changed.`; }
+  b.textContent="Apply"; $("sApply").disabled=!sinoDirty;
+}
+function buildSinoPresets(){
+  const box=$("sPresets"); box.innerHTML="";
+  for(const [name,p] of SINO_PRESETS){
+    const b=document.createElement("button"); b.className="small"; b.textContent=name; b.dataset.preset=name;
+    b.onclick=()=>{ Object.assign(SL,p); queueSinoSave(); }; box.append(b);
+  }
+}
+function buildSinoModes(){
+  const sm=$("sModes"); sm.innerHTML="";
+  for(const v of SINO_ORDER){ const b=document.createElement("button"); b.dataset.v=v; b.textContent=SINO_NAMES[v]; b.onclick=()=>{ SL.mode=v; queueSinoSave(); }; sm.append(b); }
+}
+function renderSino(){
+  document.querySelectorAll("#sModes button").forEach(b=>b.setAttribute("aria-pressed", String(+b.dataset.v===SL.mode)));
+  document.querySelectorAll("#sColors button").forEach(b=>b.setAttribute("aria-pressed", String(+b.dataset.v===SL.color)));
+  $("sBright").value=SL.bright; $("osBright").textContent=SL.bright;
+  $("sSpeed").value=SL.speed; $("osSpeed").textContent=SL.speed;
+  const cap=SINO_CAPS(SL.mode);
+  $("sColors").closest(".row").classList.toggle("disabled-ui",!cap.color);
+  $("sSpeed").closest(".row").classList.toggle("disabled-ui",!cap.speed);
+  $("sBright").closest(".row").classList.toggle("disabled-ui",!cap.light);
+  document.querySelectorAll("#sPresets button").forEach(b=>{
+    const p=SINO_PRESETS.find(x=>x[0]===b.dataset.preset)[1];
+    const same=p.mode===SL.mode && (p.mode===0 || ((!SINO_CAPS(p.mode).color || p.color===SL.color) && p.bright===SL.bright && (!SINO_CAPS(p.mode).speed || p.speed===SL.speed)));
+    b.setAttribute("aria-pressed", String(same)); b.style.background=same?"var(--accent)":""; b.style.color=same?"var(--accent-ink)":"";
+  });
+}
+let sinoTimer=null;
+const queueSino=()=>{ if(!kb||kb.family!=="sino") return; clearTimeout(sinoTimer); sinoTimer=setTimeout(()=>queue(sinoSend),80); };
+
+/* ---------- Command queue ---------- */
+function queue(fn){
+  const p=busy.then(async()=>{
+    if(!kb) throw new Error("Not connected");
+    if(!kb.dev.opened) await kb.dev.open();
+    return fn();
+  });
+  busy=p.catch(e=>{ log("!", null, e.message); });
+  return p;
+}
+const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const isXvx=()=>kb && (kb.family==="xvx-wired"||kb.family==="xvx-dongle");
+function applyLighting(){ store.set("light",L); return queue(()=>kb.family==="xvx-wired"?wiredLighting(L):dongleLighting(L)); }
+function applySettings(){ store.set("settings",S); return queue(()=>kb.family==="xvx-wired"?wiredSettings(S):dongleSettings(S)); }
+let lightTimer=null, setTimer=null;
+const queueLighting=()=>{ clearTimeout(lightTimer); store.set("light",L); lightTimer=setTimeout(()=>{ if(isXvx()) applyLighting(); },220); };
+const queueSettings=()=>{ clearTimeout(setTimer); store.set("settings",S); setTimer=setTimeout(()=>{ if(isXvx()) applySettings(); },220); };
+
+/* ---------- Connection ---------- */
+async function openGroup(g){
+  for(const d of g){
+    if(!d.opened){ try{ await d.open(); }catch(e){ log("!",null,`open ${d.productName} failed: ${e.message}`); } }
+    d.removeEventListener("inputreport", onInput); d.addEventListener("inputreport", onInput);
+  }
+}
+async function connect(g){
+  const c=classify(g);
+  await disconnect(true);
+  await openGroup(g);
+  if(!c.dev.opened){
+    notice(`Couldn't open <b>${esc(c.dev.productName||"this device")}</b>. Close the keyboard maker's own app (also from the system tray) and try again.`, true);
+    return;
+  }
+  kb={...c, group:g, name:g[0].productName||"Keyboard"};
+  userDisconnected=false; echoSeen=false;
+  try{ localStorage.setItem("lastDev", gid(g)); }catch{}
+  log("•", null, `connected ${kb.name} (${idStr(kb.dev)}) — ${FAMILY_TEXT[kb.family]}, ${BUS_TEXT[kb.bus]}`);
+  $("introCard").hidden=true;
+  render(); renderDevices();
+  if(kb.family==="xvx-dongle"){ readBattery(); battTimer=setInterval(readBattery, 15000); }
+  if(kb.family==="sino"){ sinoLoaded=false; $("sStatus").textContent="Reading the lighting saved in your keyboard…"; queue(sinoLoad); }
+}
+async function disconnect(silent){
+  clearInterval(battTimer); battTimer=null;
+  if(kb){
+    for(const d of kb.group){ d.removeEventListener("inputreport", onInput); try{ await d.close(); }catch{} }
+    if(!silent) userDisconnected=true;
+  }
+  kb=null; render(); renderDevices();
+}
+async function refreshDevices(){
+  const all=("hid" in navigator)?groupDevices(await navigator.hid.getDevices()):[];
+  const extra=store.get("extraDevices",[]);
+  // Only keyboards we know (or that you picked yourself with Shift+click) are listed — other receivers are ignored.
+  groups=all.filter(g=>profileOf(g) || extra.includes(gid(g)));
+  groups.sort((a,b)=>score(b)-score(a));
+  renderDevices();
+}
+async function autoDetect(){
+  await refreshDevices();
+  if(!groups.length){ showFirstTime(); return; }
+  // groups are sorted so the connection actually in use comes first (cable > Bluetooth > dongle).
+  if(kb && kb.group===groups[0]) return;
+  await connect(groups[0]);
+}
+function showFirstTime(){
+  notice(`<b>No keyboard selected yet.</b> Connect your K980 by <b>USB cable</b>, <b>2.4G dongle</b> or <b>Bluetooth</b>.
+  <p>First time only: click <b>+ Add keyboard</b> and pick your keyboard. The K980 appears as <b>Newmen Bluetooth Keyboard</b> on the cable,
+  <b>2.4G Wireless Receiver</b> through its dongle and <b>K980 5.0</b> over Bluetooth. Other receivers (mice etc.) are not listed. After that this page finds it by itself.</p>
+  <p class="sub">To change the RGB lighting, connect with the <b>USB cable</b> — the lighting is saved in the keyboard and stays the same in 2.4G and Bluetooth mode.
+  A sleeping wireless keyboard may be missing — press a key to wake it. Shift+click <b>+ Add keyboard</b> to pick any other device.</p>`);
+}
+function renderDevices(){
+  const ul=$("devList"); ul.innerHTML="";
+  $("devCard").hidden=!(groups.length>1 || (groups.length && document.body.classList.contains("adv")));
+  for(const g of groups){
+    const c=classify(g), active=kb && kb.group===g;
+    const li=document.createElement("li"); if(active) li.className="active";
+    const p=profileOf(g);
+    li.innerHTML=`<span><b>${esc(p?p.model:(g[0].productName||"Unknown device"))}</b> <span class="sub">${esc(p?g[0].productName:"")}</span>
+      <span class="tag">${idStr(g[0])}</span><span class="tag">${BUS_TEXT[c.bus]}</span>
+      <span class="tag ${c.family!=="generic"?"good":""}">${FAMILY_TEXT[c.family]}</span></span>`;
+    const b=document.createElement("button"); b.className="small"; b.textContent=active?"Connected":"Use this"; b.disabled=active;
+    b.onclick=()=>connect(g);
+    li.append(b); ul.append(li);
+  }
+}
+async function addDevice(e){
+  try{
+    const any=!!e?.shiftKey;   // Shift+click: list every HID device
+    const picked=await navigator.hid.requestDevice({filters:any?[]:REQUEST_FILTERS});
+    if(!picked.length) return;
+    if(any){ const ex=store.get("extraDevices",[]); const k=`${picked[0].vendorId}:${picked[0].productId}:${picked[0].productName}`; if(!ex.includes(k)){ ex.push(k); store.set("extraDevices",ex); } }
+    await refreshDevices();
+    const g=groups.find(x=>x.includes(picked[0]));
+    if(g) await connect(g);
+  }catch(e){ log("!", null, e.message); }
+}
+
+/* ---------- Bluetooth battery (Web Bluetooth, standard Battery Service) ---------- */
+async function btBattery(){
+  if(!navigator.bluetooth){ $("battNote").textContent="This browser has no Web Bluetooth. Use Chrome or Edge."; return; }
+  try{
+    let dev=lastBtDevice;
+    if(!dev){
+      const known=navigator.bluetooth.getDevices?await navigator.bluetooth.getDevices():[];
+      dev=known.find(d=>kb && d.name && kb.name && d.name.includes(kb.name.split(" ")[0])) || null;
+    }
+    if(!dev) dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true, optionalServices:["battery_service","device_information"]});
+    lastBtDevice=dev;
+    $("battNote").textContent="Connecting to "+(dev.name||"device")+"…";
+    const srv=await dev.gatt.connect();
+    const ch=await (await srv.getPrimaryService("battery_service")).getCharacteristic("battery_level");
+    const v=(await ch.readValue()).getUint8(0); showBattery(v, dev.name||"Bluetooth");
+    log("•", null, `Bluetooth battery ${dev.name}: ${v}%`);
+    try{ await ch.startNotifications(); ch.addEventListener("characteristicvaluechanged",e=>showBattery(e.target.value.getUint8(0), dev.name||"Bluetooth")); }catch{}
+  }catch(e){
+    log("!", null, "Bluetooth: "+e.message);
+    $("battNote").textContent="Couldn't read the battery over Bluetooth ("+e.message+"). Make sure the keyboard is on and connected over Bluetooth.";
+  }
+}
+
+/* ---------- Rendering ---------- */
+function render(){
+  const on=!!kb;
+  setStatus(on?"Connected · "+BUS_TEXT[kb.bus]:"Disconnected", on);
+  const model=on?(profileOf(kb.group)?.model||kb.name):"";
+  $("devName").textContent=on?model:"Not connected";
+  $("connectBtn").textContent=on?"Disconnect":"Connect";
+  const xvx=isXvx();
+  document.querySelectorAll(".xvx").forEach(c=>{ c.hidden=!xvx; });
+  const relay=kb?.family==="k980-relay";
+  $("sinoCard").hidden=!(kb?.family==="sino" || relay);
+  $("sControls").classList.toggle("disabled-ui", relay);
+  if(relay) $("sStatus").textContent="Locked while the keyboard is in "+(kb.bus==="bluetooth"?"Bluetooth":"2.4G")+" mode — connect the USB cable in wired mode to use these.";
+  $("relayCard").hidden=!relay;
+  if(relay) $("relayHow").textContent=kb.bus==="bluetooth"?"over Bluetooth":"through the 2.4G dongle";
+  $("battBox").hidden=!(kb?.family==="xvx-dongle" || kb?.bus==="bluetooth");
+  $("iModel").textContent=on?(model===kb.name?kb.name:`${model} (${kb.name})`):"–";
+  $("iConn").textContent=on?BUS_TEXT[kb.bus]:"–";
+  $("iId").textContent=on?idStr(kb.dev):"–";
+  $("iProto").textContent=on?FAMILY_TEXT[kb.family]:"–";
+  if(!on || kb.family!=="xvx-dongle"){ if(!$("batt").dataset.keep){ $("batt").textContent="–"; $("battMeter").style.width="0"; } }
+  $("respHint").textContent=kb?.family==="xvx-dongle"?"Wireless ≈ 5–21 ms depending on level":"Wired ≈ 2–18 ms depending on level";
+  buildKeyboard();
+  renderLight(); renderSettings(); renderInspector();
+}
+function renderLight(){
+  document.querySelectorAll("#modes button").forEach(b=>b.setAttribute("aria-pressed", String(+b.dataset.v===L.mode)));
+  $("lColor").value=L.color; $("lColorful").checked=L.colorful;
+  $("lBright").value=L.bright; $("oBright").textContent=L.bright;
+  $("lSpeed").value=L.speed; $("oSpeed").textContent=L.speed;
+  document.querySelectorAll("#lDir button").forEach(b=>b.setAttribute("aria-pressed", String(+b.dataset.v===L.dir)));
+}
+function renderSettings(){
+  $("sWin").checked=S.win; $("sAltF4").checked=S.altf4; $("sAltTab").checked=S.alttab; $("sFn").checked=S.fn;
+  $("sSleep").value=S.sleep; $("sResp").value=S.resp;
+}
+function renderInspector(){
+  const ul=$("insp"), sel=$("cIface"); ul.innerHTML=""; sel.innerHTML="";
+  if(!kb){ ul.innerHTML=`<li class="sub">No device selected.</li>`; return; }
+  kb.group.forEach((d,i)=>{
+    const li=document.createElement("li");
+    const cols=(d.collections||[]).map(c=>{
+      const fmt=k=>reports({collections:[c]},k).map(r=>`${r.id.toString(16).padStart(2,"0")}:${r.bytes}B`).join(" ")||"–";
+      return `usage ${h16(c.usagePage)}:${c.usage.toString(16).padStart(2,"0")}  in[${fmt("inputReports")}] out[${fmt("outputReports")}] feat[${fmt("featureReports")}]`;
+    }).join("\n   ");
+    li.textContent=`#${i+1} ${d.productName} ${idStr(d)}${d===kb.dev?"  ← used for control":""}\n   ${cols||"(no collections visible)"}`;
+    li.style.whiteSpace="pre-wrap"; ul.append(li);
+    const o=document.createElement("option"); o.value=i; o.textContent=`Interface #${i+1}`; sel.append(o);
+  });
+  sel.value=String(kb.group.indexOf(kb.dev));
+}
+
+/* ---------- Per-key editor (layout depends on protocol) ---------- */
+let tool="paint", painting=false, kbMode=null;
+function keyDefs(){
+  if(kb?.family==="sino"){
+    return SINO_SLOTS.map((lab,s)=>{ const col=Math.floor(s/6), row=s%6;
+      return {label:lab||String(s), id:s, x:12+col*37, y:28+row*41, w:34, h:36, none:!lab}; });
+  }
+  return LAYOUT.map(([label,idx,x,y,w,h])=>({label, id:idx, x, y, w, h}));
+}
+const perKeyStore=()=>kb?.family==="sino"?perKeySino:perKeyXvx;
+function buildKeyboard(){
+  const mode=kb?.family==="sino"?"sino":"xvx";
+  const fam=kb?.family;
+  $("perKeyCard").hidden=!!kb && !(fam==="xvx-wired"||fam==="xvx-dongle"||fam==="sino");
+  $("pBrightWrap").hidden=mode!=="sino";
+  $("pApply").disabled=!(fam==="xvx-wired"||fam==="sino");
+  $("pNote").textContent=fam==="xvx-dongle"?"Per-key colors upload over the USB cable only — plug in the cable to send them."
+    : fam==="sino"?"Live preview: colors show as you paint but reset when the keyboard restarts — use “Lighting — saved in the keyboard” above for permanent lighting. Numbered keys have no LED on the reference board but can still be tried."
+    : "Click or drag across keys to paint them.";
+  if(kbMode===mode) return; kbMode=mode;
+  const kbEl=$("kb"); kbEl.innerHTML="";
+  for(const k of keyDefs()){
+    const el=document.createElement("div"); el.className="k"+(k.none?" none":""); el.dataset.i=k.id;
+    Object.assign(el.style,{left:((k.x-10)/780*100)+"%", top:((k.y-25)/250*100)+"%", width:(k.w/780*100)+"%", height:(k.h/250*100)+"%"});
+    el.textContent=k.label; el.title=mode==="sino"?`${k.label} (slot ${k.id})`:`${k.label} (LED ${k.id})`;
+    el.append(document.createElement("i")); kbEl.append(el);
+  }
+  kbEl.querySelectorAll(".k").forEach(paintKey);
+}
+function initPainter(){
+  const kbEl=$("kb");
+  const hit=e=>{ const el=document.elementFromPoint(e.clientX,e.clientY); return el && el.closest("#kb .k"); };
+  const paint=k=>{ if(!k) return; const st=perKeyStore(), i=k.dataset.i; if(tool==="paint") st[i]=$("pColor").value; else delete st[i]; paintKey(k); queueSino(); };
+  kbEl.addEventListener("pointerdown",e=>{ painting=true; kbEl.setPointerCapture(e.pointerId); paint(hit(e)); });
+  kbEl.addEventListener("pointermove",e=>{ if(painting) paint(hit(e)); });
+  const end=()=>{ if(painting){ painting=false; savePerKey(); } };
+  kbEl.addEventListener("pointerup",end); kbEl.addEventListener("pointercancel",end);
+}
+function paintKey(k){
+  const c=perKeyStore()[k.dataset.i];
+  k.style.background=c?`color-mix(in srgb, ${c} 55%, var(--key))`:"";
+  k.style.borderColor=c||"";
+  k.querySelector("i").style.background=c||"transparent";
+}
+function savePerKey(){ store.set("perkey",perKeyXvx); store.set("perkeySino",perKeySino); }
+
+/* ---------- Raw console ---------- */
+function parseHex(s){ const t=s.replace(/0x/gi," ").replace(/[^0-9a-f]+/gi," ").trim(); return t?t.split(/\s+/).map(x=>parseInt(x,16)&255):[]; }
+async function consoleSend(){
+  if(!kb) return;
+  const d=kb.group[+$("cIface").value], id=parseInt($("cId").value,16)||0, data=Uint8Array.from(parseHex($("cData").value));
+  const kind=$("cType").value;
+  const r=reports(d, kind==="feature"?"featureReports":"outputReports").find(x=>x.id===id);
+  const buf=new Uint8Array(Math.max(r?r.bytes:data.length, data.length)); buf.set(data);
+  try{
+    if(!d.opened) await d.open();
+    if(kind==="feature") await d.sendFeatureReport(id, buf); else await d.sendReport(id, buf);
+    log("→", buf, `(${kind} ${id.toString(16)} on #${+$("cIface").value+1})`);
+  }catch(e){ log("!", null, e.message); }
+}
+async function consoleRead(){
+  if(!kb) return;
+  const d=kb.group[+$("cIface").value], id=parseInt($("cId").value,16)||0;
+  try{ if(!d.opened) await d.open(); const r=await d.receiveFeatureReport(id); log("←", new Uint8Array(r.buffer,r.byteOffset,r.byteLength), `(feature ${id.toString(16)})`); }
+  catch(e){ log("!", null, e.message); }
+}
+
+/* ---------- Wire up UI ---------- */
+function buildUI(){
+  const m=$("modes");
+  for(const [v,name] of MODES){ const b=document.createElement("button"); b.dataset.v=v; b.textContent=name; b.onclick=()=>{ L.mode=v; renderLight(); queueLighting(); }; m.append(b); }
+  const sw=$("swatches");
+  for(const c of SWATCHES){ const b=document.createElement("button"); b.style.background=c; b.title=c; b.setAttribute("aria-label","Color "+c);
+    b.onclick=()=>{ L.color=c; L.colorful=false; renderLight(); queueLighting(); }; sw.append(b); }
+  $("lColor").oninput=e=>{ L.color=e.target.value; L.colorful=false; renderLight(); queueLighting(); };
+  $("lColorful").onchange=e=>{ L.colorful=e.target.checked; queueLighting(); };
+  $("lBright").oninput=e=>{ L.bright=+e.target.value; $("oBright").textContent=L.bright; queueLighting(); };
+  $("lSpeed").oninput=e=>{ L.speed=+e.target.value; $("oSpeed").textContent=L.speed; queueLighting(); };
+  document.querySelectorAll("#lDir button").forEach(b=>b.onclick=()=>{ L.dir=+b.dataset.v; renderLight(); queueLighting(); });
+
+  const bind=(id,key,num)=>$(id).onchange=e=>{ S[key]=num?+e.target.value:e.target.checked; queueSettings(); };
+  bind("sWin","win"); bind("sAltF4","altf4"); bind("sAltTab","alttab"); bind("sFn","fn"); bind("sSleep","sleep",true); bind("sResp","resp",true);
+  $("syncTime").onclick=async()=>{ const b=$("syncTime"); b.disabled=true;
+    try{ await queue(()=>kb.family==="xvx-wired"?wiredTime():dongleTime()); b.textContent="Synced ✓"; }catch{ b.textContent="Failed"; }
+    setTimeout(()=>{ b.textContent="Sync time"; b.disabled=false; },1800); };
+
+  buildSinoModes();
+  SINO_COLORS.forEach(([name,css],i)=>{ const b=document.createElement("button"); b.dataset.v=i;
+    b.innerHTML=`<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${css};vertical-align:-1px;margin-right:5px;border:1px solid var(--line)"></span>${name}`;
+    b.onclick=()=>{ SL.color=i; queueSinoSave(); }; $("sColors").append(b); });
+  $("sBright").oninput=e=>{ SL.bright=+e.target.value; queueSinoSave(); };
+  $("sSpeed").oninput=e=>{ SL.speed=+e.target.value; queueSinoSave(); };
+  buildSinoPresets();
+  $("sApply").onclick=sinoApply;
+  $("sRevert").onclick=()=>{ $("sStatus").textContent="Reloading the lighting saved in your keyboard…"; queue(sinoLoad); };
+  renderSino();
+
+  buildKeyboard(); initPainter();
+  document.querySelectorAll("#pTool button").forEach(b=>b.onclick=()=>{ tool=b.dataset.v; document.querySelectorAll("#pTool button").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); });
+  $("pFill").onclick=()=>{ const st=perKeyStore(); for(const k of keyDefs()) st[k.id]=$("pColor").value; document.querySelectorAll("#kb .k").forEach(paintKey); savePerKey(); queueSino(); };
+  $("pClear").onclick=()=>{ const st=perKeyStore(); for(const k in st) delete st[k]; document.querySelectorAll("#kb .k").forEach(paintKey); savePerKey(); queueSino(); };
+  $("pBright").oninput=queueSino;
+  $("pApply").onclick=async()=>{ const b=$("pApply"); b.disabled=true; b.textContent="Sending…";
+    try{
+      if(kb.family==="sino") await queue(sinoSend);
+      else { await queue(wiredPerKey); L.mode=0x80; await applyLighting(); renderLight(); }
+      b.textContent="Sent ✓";
+    }catch{ b.textContent="Failed"; }
+    setTimeout(()=>{ b.textContent="Send to keyboard"; buildKeyboard(); },1800); };
+
+  $("cSend").onclick=consoleSend; $("cRead").onclick=consoleRead;
+  $("copyLog").onclick=()=>navigator.clipboard?.writeText($("log").textContent);
+  $("clearLog").onclick=()=>{ $("log").textContent=""; };
+  $("btBatt").onclick=btBattery;
+
+  $("connectBtn").onclick=async()=>{ if(kb){ await disconnect(false); notice("Disconnected. Click <b>Connect</b> to reconnect."); } else { userDisconnected=false; await refreshDevices(); if(groups.length) autoDetect(); else addDevice(); } };
+  $("addDevBtn").onclick=addDevice;
+  $("advToggle").onclick=e=>{ e.preventDefault(); const on=document.body.classList.toggle("adv");
+    e.target.textContent=on?"Hide advanced tools":"Show advanced tools"; renderDevices(); };
+  $("themeBtn").onclick=()=>{
+    const cur=document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+    const nx=cur==="dark"?"light":"dark"; document.documentElement.dataset.theme=nx;
+    try{ localStorage.setItem("theme",nx); }catch{}
+  };
+}
+
+/* ---------- Start ---------- */
+(async()=>{
+  try{ const t=localStorage.getItem("theme"); if(t) document.documentElement.dataset.theme=t; }catch{}
+  buildUI(); render();
+  if(!("hid" in navigator)){
+    notice(`<b>This browser can't talk to keyboards.</b> Open this page in <b>Chrome or Edge</b> (version 89 or newer) on Windows, macOS, Linux or ChromeOS. Phones, Firefox and Safari don't support WebHID.`, true);
+    $("connectBtn").disabled=$("addDevBtn").disabled=true; return;
+  }
+  if(window.top!==window.self){
+    notice(`This page is shown inside another page, where browsers block device access. <a href="${location.href}" target="_blank" rel="noopener">Open it in its own tab</a>.`, true);
+  }
+  navigator.hid.addEventListener("disconnect", async e=>{
+    if(kb && kb.group.includes(e.device)){
+      log("•",null,"device disconnected"); clearInterval(battTimer); battTimer=null; kb=null; render();
+      notice("Keyboard disconnected (unplugged, switched mode or asleep). It reconnects automatically when it's back.");
+    }
+    await refreshDevices();
+  });
+  navigator.hid.addEventListener("connect", ()=>{ setTimeout(async()=>{ if(!userDisconnected) autoDetect(); else refreshDevices(); }, 800); }); // switches to the connection now in use
+  await autoDetect();
+})();
+</script>
+</body>
+</html>
