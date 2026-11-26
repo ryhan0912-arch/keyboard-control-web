@@ -195,6 +195,22 @@ footer a{color:inherit}
     <p class="sub" style="margin:8px 0 0" id="sStatus">Pick an effect, color or preset, then press Apply. It's saved in the keyboard and stays in 2.4G and Bluetooth mode.</p>
   </section>
 
+  <section class="card" id="ksCard" hidden>
+    <h2>Keyboard settings — saved in the keyboard</h2>
+    <div id="ksControls">
+      <div class="row"><label for="ksSleep">Sleep after<div class="sub">On battery (2.4G / Bluetooth) the keyboard turns off its lights and sleeps after this long without typing</div></label>
+        <select id="ksSleep"></select></div>
+      <div class="row"><label for="ksDeb">Debounce <output id="oKsDeb"></output><div class="sub">0 = fastest response. Raise it if a key sometimes types twice.</div></label>
+        <input type="range" id="ksDeb" min="0" max="4" step="1"></div>
+      <div class="tools" style="margin-top:8px">
+        <button class="primary" id="ksApply" disabled>Apply</button>
+        <button id="ksRevert" disabled>Undo changes</button>
+        <span class="sub" id="ksDirty"></span>
+      </div>
+    </div>
+    <p class="sub" style="margin:8px 0 0" id="ksStatus">Connect the keyboard with the USB cable in wired mode to change settings.</p>
+  </section>
+
   <section class="card wide" id="keyCard" hidden>
     <h2>Key remapping — saved in the keyboard</h2>
     <div id="kmControls">
@@ -223,6 +239,79 @@ footer a{color:inherit}
       </div>
     </div>
     <p class="sub" style="margin:8px 0 0" id="kmStatus">Connect the keyboard with the USB cable in wired mode to remap keys.</p>
+  </section>
+
+  <section class="card wide" id="mcCard" hidden>
+    <h2>Macros — saved in the keyboard</h2>
+    <div id="mcControls">
+      <p class="sub" style="margin:0">Up to 8 macros. Record or build one, save it, then give it to a key in <b>Key remapping</b> (list “Macros”).</p>
+      <div class="tools" id="mcList" style="margin-top:10px"></div>
+      <div id="mcEditor" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+        <div class="row" style="border-top:0"><label for="mcName">Name<div class="sub">Only stored in this browser</div></label><input type="text" id="mcName" maxlength="30" style="max-width:220px"></div>
+        <div class="row"><label for="mcMode">When the key is pressed</label>
+          <div class="tools"><select id="mcMode"></select><span id="mcRepeatWrap" class="sub">Times <input type="text" id="mcRepeat" size="4" value="1" inputmode="numeric"></span></div></div>
+        <div class="row"><span>Steps<div class="sub" id="mcSize"></div></span>
+          <div class="tools"><button id="mcRec">● Record</button>
+            <label class="sub"><input type="checkbox" id="mcFixed"> Same delay between steps:</label>
+            <input type="text" id="mcFixedMs" size="4" value="20" inputmode="numeric"><span class="sub">ms</span>
+            <button class="small" id="mcClear">Clear steps</button></div></div>
+        <div id="mcEvents" style="padding:8px 0"></div>
+        <div class="tools"><span class="sub">Add step:</span><select id="mcKey" style="max-width:180px"></select>
+          <select id="mcHow"><option value="tap">Tap (press + release)</option><option value="down">Press only</option><option value="up">Release only</option></select>
+          <span class="sub">then wait</span><input type="text" id="mcStepMs" size="5" value="20" inputmode="numeric"><span class="sub">ms</span>
+          <button class="small" id="mcAdd">Add</button></div>
+        <div class="tools" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+          <button class="primary" id="mcSave" disabled>Save to keyboard</button>
+          <button id="mcDelete" disabled>Delete macro</button>
+          <span class="sub" id="mcDirty"></span>
+        </div>
+      </div>
+    </div>
+    <p class="sub" style="margin:8px 0 0" id="mcStatus">Connect the keyboard with the USB cable in wired mode to edit macros.</p>
+  </section>
+
+  <section class="card wide" id="gmCard" hidden>
+    <h2>Game mode colors — saved in the keyboard</h2>
+    <div id="gmControls">
+      <p class="sub" style="margin:0">Give each key its own color. They show when the lighting effect is <b>Game mode</b>, and are saved in the keyboard, so they also work in 2.4G and Bluetooth mode. The keyboard shows <b>Color set 1</b>.</p>
+      <div class="tools" id="gmSets" style="margin-top:10px"></div>
+      <div class="tools" style="margin-top:10px">
+        <input type="color" id="gmColor" value="#ff2020" aria-label="Paint color"><div class="swatches" id="gmSwatches"></div>
+        <div class="seg" id="gmTool"><button data-v="paint" aria-pressed="true">Paint</button><button data-v="erase">Turn off</button></div>
+        <button class="small" id="gmFill">Fill all</button><button class="small" id="gmClear">All off</button>
+      </div>
+      <div class="kbwrap"><div class="kb" id="gmKb"></div></div>
+      <div class="tools" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+        <button class="primary" id="gmApply" disabled>Apply</button>
+        <button id="gmUndo" disabled>Undo changes</button>
+        <button id="gmUse">Use Game mode</button>
+        <span class="sub" id="gmDirty"></span>
+      </div>
+    </div>
+    <p class="sub" style="margin:8px 0 0" id="gmStatus">Connect the keyboard with the USB cable in wired mode to edit Game mode colors.</p>
+  </section>
+
+  <section class="card wide" id="muCard" hidden>
+    <h2>Music mode</h2>
+    <div id="muControls">
+      <p class="sub" style="margin:0">The keys light up with the sound while this page is open (Chrome may keep it running in the background). Stop it to get your saved lighting back.</p>
+      <div class="tools" style="margin-top:10px">
+        <button class="primary" id="muStartPc">▶ Start</button>
+        <button id="muStop" disabled>■ Stop</button>
+        <label class="sub">Sound source <select id="muSource" style="max-width:260px"><option value="auto">PC sound (automatic)</option></select></label>
+        <label class="sub"><input type="checkbox" id="muAuto"> Start by itself when the keyboard connects</label>
+      </div>
+      <p class="sub" style="margin:6px 0 0" id="muHint">“PC sound (automatic)” hears whatever this computer plays on the device you're using right now — speakers, headphones or monitor — and follows you when you switch, with no permission pop-ups. It needs the small <b>music helper</b> running on this PC:
+        <a href="music-helper/K980-Music-Helper.cmd" download>download K980-Music-Helper.cmd</a>, double-click it and leave its window open (minimized is fine). The helper drives the lights itself, so music mode <b>keeps running after you close this page</b>; open the page again to change or stop it. It only listens to the sound on this PC and sends nothing anywhere else. Music mode needs the keyboard on the USB cable (wired mode).</p>
+      <div class="meter" style="max-width:320px;margin-top:10px"><i id="muMeter"></i></div>
+      <div class="row" style="margin-top:6px"><label for="muEffect">Effect</label><select id="muEffect"></select></div>
+      <div class="row"><label for="muColorMode">Colors</label>
+        <div class="tools"><select id="muColorMode"><option value="rainbow">Rainbow</option><option value="single">One color</option></select>
+          <span><input type="color" id="muColor" value="#00c8ff" aria-label="Music color"></span></div></div>
+      <div class="row"><label for="muGain">Sensitivity <output id="oMuGain">1.5×</output></label><input type="range" id="muGain" min="0.5" max="4" step="0.1" value="1.5"></div>
+      <div class="row"><label for="muSmooth">Smoothness <output id="oMuSmooth">80%</output></label><input type="range" id="muSmooth" min="0" max="95" step="5" value="80"></div>
+    </div>
+    <p class="sub" style="margin:8px 0 0" id="muStatus">Connect the keyboard with the USB cable in wired mode to use music mode.</p>
   </section>
 
   <section class="card wide" id="perKeyCard">
@@ -257,6 +346,12 @@ footer a{color:inherit}
         <span class="sub">Replies and input reports appear in the log below.</span>
       </div>
     </details>
+  </section>
+
+  <section class="card wide" id="rsCard" hidden>
+    <h2>Reset everything</h2>
+    <p class="sub" style="margin:0">Puts the keyboard back to how it originally was: lighting, sleep time, debounce, key remaps, macros and Game mode colors. Music mode is turned off. Needs the USB cable in wired mode.</p>
+    <div class="tools" style="margin-top:10px"><button id="rsBtn" style="border-color:var(--bad);color:var(--bad)">Reset everything</button><span class="sub" id="rsStatus"></span></div>
   </section>
 
   <section class="card wide advanced">
@@ -604,6 +699,7 @@ async function sinoLoad(){   // show what the keyboard currently has
       const v=m[slotA(BLOCK1,code)]; SL.speed=Math.min(4,v>>4); SL.bright=Math.min(4,v&15); SL.color=Math.min(7,m[slotC(BLOCK1,code)]);
     }
     sinoLoaded=true; store.set("sinoLight3",SL);
+    ksFrom(m); renderKs(); $("ksStatus").textContent="Showing the settings saved in your keyboard.";
     $("sStatus").textContent="Showing the lighting saved in your keyboard. Pick an effect, color or preset, then press Apply.";
     setDirty(false);
   }catch(e){
@@ -629,6 +725,44 @@ async function sinoSave(){
   let ok=true; for(let i=16;i<262;i++) if(v[i]!==want[i]) ok=false;
   $("sStatus").textContent=ok?`Applied and saved to keyboard ✓ (${new Date().toLocaleTimeString()})`:"Sent, but the keyboard didn't confirm the change. Send me the log.";
   if(ok) setDirty(false);
+}
+/* ---------- Sleep time and debounce (same B6 page; verified on a real K980) ----------
+   block+17 (full 33) = sleep time in minutes, 0 = never (confirmed: 1 made the keyboard sleep after ~1 minute in 2.4G)
+   block+2  (full 18) = debounce level 0..4 (range from Xinmeng's driver UI; 0 = fastest) — both blocks are updated */
+const KS_SLEEP=[[0,"Never"],[1,"1 minute"],[2,"2 minutes"],[3,"3 minutes"],[5,"5 minutes"],[10,"10 minutes"],[15,"15 minutes"],[20,"20 minutes"],[30,"30 minutes"],[60,"60 minutes"]];
+let KS={sleep:2, debounce:0, loaded:false, dirty:false};
+function ksFrom(m){ KS.sleep=m[BLOCK1+17]; KS.debounce=Math.min(4,m[BLOCK1+2]); KS.loaded=true; KS.dirty=false; }
+function renderKs(){
+  const s=$("ksSleep"); if(!KS_SLEEP.some(([v])=>v===KS.sleep)){ const o=document.createElement("option"); o.value=KS.sleep; o.textContent=`${KS.sleep} minutes`; s.append(o); }
+  s.value=KS.sleep; $("ksDeb").value=KS.debounce; $("oKsDeb").textContent=KS.debounce;
+  const ok=KS.loaded && kb?.family==="sino";
+  $("ksApply").disabled=!KS.dirty||!ok; $("ksRevert").disabled=!KS.dirty;
+  $("ksDirty").textContent=KS.dirty?"Not applied yet — press Apply.":"";
+}
+async function ksSave(){
+  await sinoUnlock();
+  const m=await sinoRead();
+  for(const base of blocks(m)){ m[base+17]=KS.sleep; m[base+2]=KS.debounce; }
+  const want=m.slice();
+  await sinoWrite(m);
+  const v=await sinoRead();
+  if(v[BLOCK1+17]!==KS.sleep || v[BLOCK1+2]!==KS.debounce) throw new Error("the keyboard didn't confirm the change");
+  for(let i=16;i<262;i++) if(v[i]!==want[i]) throw new Error("the keyboard didn't confirm the change");
+  KS.dirty=false;
+}
+async function ksApply(){
+  const b=$("ksApply"); b.disabled=true; b.textContent="Applying…";
+  try{ await queue(ksSave); $("ksStatus").textContent=`Settings applied and saved to keyboard ✓ (${new Date().toLocaleTimeString()})`; }
+  catch(e){ $("ksStatus").textContent=`Not saved — ${e.message}.`; }
+  b.textContent="Apply"; renderKs();
+}
+function buildKsUI(){
+  const s=$("ksSleep"); for(const [v,n] of KS_SLEEP){ const o=document.createElement("option"); o.value=v; o.textContent=n; s.append(o); }
+  s.onchange=()=>{ KS.sleep=+s.value; KS.dirty=true; renderKs(); };
+  $("ksDeb").oninput=e=>{ KS.debounce=+e.target.value; KS.dirty=true; renderKs(); };
+  $("ksApply").onclick=ksApply;
+  $("ksRevert").onclick=async()=>{ try{ ksFrom(await queue(sinoRead)); }catch{} renderKs(); };
+  renderKs();
 }
 /* Choices are staged until Apply is pressed. */
 const SINO_PRESETS=[
@@ -719,6 +853,8 @@ const entryName=e=>{
   if(e.startsWith("0000") && m){ const key=KEY_NAMES["000000"+e.substr(6,2)]||("Code "+e.substr(6,2));
     const order=[["Win",8],["Ctrl",1],["Alt",4],["Shift",2]];
     const mods=order.filter(([,b])=>m&b).map(([n])=>n).concat(order.filter(([,b])=>m&(b<<4)).map(([n])=>"Right "+n)); return mods.concat(key).join("+"); }
+  if(e.startsWith("10")) return "Macro (slot "+parseInt(e.substr(6,2),16)+")";
+  if(e.startsWith("07")) return ({F0:"Left click",F1:"Right click",F2:"Middle click",F3:"Mouse forward",F4:"Mouse back"})[e.substr(6,2)]||"Mouse button";
   return e.startsWith("02")?"Built-in key with Fn function":"Code "+e; };
 let KM={loaded:false, cur:null, staged:{}, sel:null};
 const kmHex=(b,slot)=>{ const a=8+kmAddr(slot); return [...b.slice(a,a+4)].map(x=>x.toString(16).padStart(2,"0")).join("").toUpperCase(); };
@@ -815,6 +951,466 @@ function buildKmUI(){
   $("kmResetAll").onclick=kmResetAll;
   buildKmKeyboard(); renderKm();
 }
+/* ---------- K980 macros (verified on a real K980) ----------
+   Macro memory: pages DC/E0/E4/E8, 8 slots x 128 bytes each (slot n = page n/8). All 32 slots ship with one-key
+   factory placeholders that no key uses; this page keeps its macros in page E8 (slots 24-31, a duplicate of E0)
+   and puts the placeholder back when a macro is deleted.
+   Read 05 [85 E8 00 00 00] -> feature 06 (data from full index 8). Write feature 06 [05 E8 00 40 00 00 00] + 1024 bytes.
+   Macro bytes: 2-byte big-endian repeat count, then per event [0x80 if release | delay 3..127 ms, HID code];
+   a longer delay adds 00 03 <hi> <lo> (delay / 100 ms) after the event, and the event's low bits hold delay % 100.
+   A key plays a macro with key entry 10 00 <mode> <slot>: mode 1 = play N times, 2 = repeat while held, 4 = repeat until any key. */
+const MC_PAGE=0xE8, MC_FIRST=24, MC_COUNT=8;
+const MC_PLACEHOLDER=[0x26,0x27,0x59,0x5A,0x5B,0x5C,0x5D,0x5E].map(x=>[0x00,0x01,0x01,x,0x81,x]);
+const MC_MODES=[[1,"Play once / N times"],[2,"Repeat while the key is held"],[4,"Repeat until any key is pressed"]];
+const CODE_TO_HID={Enter:0x28,Escape:0x29,Backspace:0x2A,Tab:0x2B,Space:0x2C,Minus:0x2D,Equal:0x2E,BracketLeft:0x2F,BracketRight:0x30,Backslash:0x31,
+  Semicolon:0x33,Quote:0x34,Backquote:0x35,Comma:0x36,Period:0x37,Slash:0x38,CapsLock:0x39,PrintScreen:0x46,ScrollLock:0x47,Pause:0x48,Insert:0x49,
+  Home:0x4A,PageUp:0x4B,Delete:0x4C,End:0x4D,PageDown:0x4E,ArrowRight:0x4F,ArrowLeft:0x50,ArrowDown:0x51,ArrowUp:0x52,NumLock:0x53,
+  NumpadDivide:0x54,NumpadMultiply:0x55,NumpadSubtract:0x56,NumpadAdd:0x57,NumpadEnter:0x58,NumpadDecimal:0x63,ContextMenu:0x65,
+  ControlLeft:0xE0,ShiftLeft:0xE1,AltLeft:0xE2,MetaLeft:0xE3,ControlRight:0xE4,ShiftRight:0xE5,AltRight:0xE6,MetaRight:0xE7};
+for(let i=0;i<26;i++) CODE_TO_HID["Key"+String.fromCharCode(65+i)]=0x04+i;
+for(let i=1;i<=9;i++) CODE_TO_HID["Digit"+i]=0x1D+i; CODE_TO_HID.Digit0=0x27;
+for(let i=1;i<=12;i++) CODE_TO_HID["F"+i]=0x39+i;
+for(let i=1;i<=9;i++) CODE_TO_HID["Numpad"+i]=0x58+i; CODE_TO_HID.Numpad0=0x62;
+const MC_KEYS=(()=>{ const l=[]; for(const [g,list] of KEY_GROUPS){ if(g==="Media") continue;
+    for(const [n,e] of list) l.push([g,n,parseInt(e.substr(6,2),16)]); }
+  return l; })();   // (mouse clicks are not offered: tested on the K980, neither key nor macro mouse codes click)
+const hidName=h=>(MC_KEYS.find(k=>k[2]===h)||[0,"Code "+h.toString(16).toUpperCase()])[1];
+let MC={loaded:false, raw:null, slots:[], sel:0, recording:false, lastT:0};
+const mcMeta=()=>store.get("macroMeta",{});
+function mcEncode(m){
+  const out=[(m.repeat>>8)&255, m.repeat&255];
+  for(const ev of m.events){
+    const rel=ev.down?0:0x80, d=Math.max(3,Math.min(65000,Math.round(ev.delay||3)));
+    if(d<=127) out.push(rel|d, ev.hid);
+    else { const q=Math.floor(d/100), r=Math.max(3,d%100); out.push(rel|r, ev.hid, 0x00, 0x03, (q>>8)&255, q&255); }
+  }
+  return out;
+}
+function mcDecode(b){
+  const events=[]; let i=2;
+  while(i+1<b.length && !(b[i]===0 && b[i+1]===0)){
+    let delay=b[i]&0x7F; const ev={down:!(b[i]&0x80), hid:b[i+1]}; i+=2;
+    if(b[i]===0x00 && b[i+1]===0x03){ delay=((b[i+2]<<8)|b[i+3])*100+(delay>=3&&delay<100?delay:0); i+=4; }
+    ev.delay=delay; events.push(ev);
+  }
+  return {repeat:Math.max(1,(b[0]<<8)|b[1]), events};
+}
+const mcIsPlaceholder=(bytes,k)=>bytes.slice(0,6).every((x,i)=>x===MC_PLACEHOLDER[k][i]) && bytes.slice(6).every(x=>x===0);
+async function mcLoad(){
+  try{
+    const b=await kmReadPage(0x85,MC_PAGE);
+    if((b[1]&0x7F)!==5) throw new Error("the macro memory didn't look as expected");
+    MC.raw=b; const meta=mcMeta();
+    MC.slots=[...Array(MC_COUNT)].map((_,k)=>{ const bytes=[...b.slice(8+k*128,8+k*128+128)], slot=MC_FIRST+k;
+      if(mcIsPlaceholder(bytes,k)) return {slot, empty:true, name:"", mode:1, repeat:1, events:[]};
+      const d=mcDecode(bytes), m=meta[slot]||{}; return {slot, empty:false, name:m.name||`Macro ${k+1}`, mode:m.mode||1, ...d}; });
+    MC.loaded=true; MC.dirty=false;
+    $("mcStatus").textContent="Showing the macros saved in your keyboard.";
+  }catch(e){ MC.loaded=false; log("!",null,e.message); $("mcStatus").textContent="Couldn't read the macro memory ("+e.message+") — macros are disabled to keep your keyboard safe."; }
+  renderMc(); kmRefreshMacroOptions();
+}
+function mcCur(){ return MC.slots[MC.sel]; }
+function renderMc(){
+  const list=$("mcList"); list.innerHTML="";
+  (MC.slots.length?MC.slots:[...Array(MC_COUNT)].map((_,k)=>({slot:MC_FIRST+k,empty:true,events:[]}))).forEach((m,k)=>{
+    const b=document.createElement("button"); b.className="small"; b.setAttribute("aria-pressed",String(k===MC.sel));
+    b.textContent=m.empty&&!m.events.length?`${k+1}. (empty)`:`${k+1}. ${m.name||"Macro "+(k+1)}`;
+    b.onclick=()=>{ if(MC.recording) mcStopRec(); MC.sel=k; renderMc(); }; list.append(b); });
+  const m=mcCur(), ok=MC.loaded && kb?.family==="sino";
+  $("mcEditor").classList.toggle("disabled-ui", !m);
+  if(!m){ return; }
+  $("mcName").value=m.name||""; $("mcMode").value=m.mode; $("mcRepeat").value=m.repeat; $("mcRepeatWrap").hidden=m.mode!==1;
+  const ev=$("mcEvents"); ev.innerHTML="";
+  if(!m.events.length) ev.innerHTML=`<span class="sub">No steps yet — press Record and type, or add steps below.</span>`;
+  m.events.forEach((e,i)=>{ const c=document.createElement("span"); c.className="tag"; c.style.cssText="margin:2px;display:inline-flex;gap:4px;align-items:center";
+    c.innerHTML=`${e.down?"↓":"↑"} ${esc(hidName(e.hid))} <span class="sub">${e.delay} ms</span>`;
+    const x=document.createElement("button"); x.className="small"; x.textContent="×"; x.style.padding="0 6px"; x.title="Remove this step";
+    x.onclick=()=>{ m.events.splice(i,1); MC.dirty=true; renderMc(); }; c.append(x); ev.append(c); });
+  const size=mcEncode(m).length;
+  $("mcSize").textContent=`${size} of 128 bytes used`; $("mcSize").style.color=size>128?"var(--bad)":"";
+  $("mcRec").textContent=MC.recording?"■ Stop recording":"● Record";
+  $("mcSave").disabled=!ok||!MC.dirty||size>128||!m.events.length;
+  $("mcDelete").disabled=!ok||m.empty;
+  $("mcDirty").textContent=MC.dirty?"Not saved yet — press Save to keyboard.":"";
+}
+function mcKeyHandler(e){
+  if(!MC.recording) return;
+  const hid=CODE_TO_HID[e.code]; e.preventDefault(); e.stopPropagation();
+  if(!hid || (e.type==="keydown" && e.repeat)) return;
+  const m=mcCur(), now=performance.now();
+  if(m.events.length){ const last=m.events[m.events.length-1];
+    last.delay=$("mcFixed").checked ? +$("mcFixedMs").value||20 : Math.round(now-MC.lastT); }
+  m.events.push({down:e.type==="keydown", hid, delay:+$("mcFixedMs").value||20}); MC.lastT=now; MC.dirty=true; renderMc();
+}
+function mcStartRec(){ const m=mcCur(); if(!m) return; MC.recording=true; MC.lastT=performance.now();
+  window.addEventListener("keydown",mcKeyHandler,true); window.addEventListener("keyup",mcKeyHandler,true);
+  $("mcStatus").textContent="Recording — type your keys now. Press Stop recording when done."; renderMc(); }
+function mcStopRec(){ MC.recording=false; window.removeEventListener("keydown",mcKeyHandler,true); window.removeEventListener("keyup",mcKeyHandler,true);
+  $("mcStatus").textContent="Recording stopped. Check the steps, then press Save to keyboard."; renderMc(); }
+async function mcWrite(fn){
+  await queue(async()=>{
+    const d=sinoCfgDev();
+    await sinoUnlock();
+    const cfg=await sinoRead();
+    const page=await kmReadPage(0x85,MC_PAGE);
+    if((page[1]&0x7F)!==5) throw new Error("the macro memory didn't look as expected — nothing was written");
+    const data=new Uint8Array(1031); data.set([0x05,MC_PAGE,0x00,0x40,0x00,0x00,0x00]); data.set(page.slice(8,8+1024),7);
+    const changes=fn(data);   // returns [{k, bytes}]
+    await d.sendFeatureReport(6,data); log("→",data.slice(0,64),"(write macro memory)"); await sleep(60);
+    if(changes.keymap){ await d.sendFeatureReport(6,changes.keymap); log("→",changes.keymap.slice(0,64),"(write key table)"); await sleep(60); }
+    await sinoWrite(cfg.slice());
+    const v=await kmReadPage(0x85,MC_PAGE);
+    for(const {k,bytes} of changes.slots) for(let i=0;i<128;i++) if(v[8+k*128+i]!==(bytes[i]||0)) throw new Error("the keyboard didn't confirm the macro");
+    if(changes.keymap && KM.loaded){ KM.cur=await kmReadPage(0x84,0xD4); }
+  });
+}
+function mcKeymapUpdate(slot, newEntry){   // keys bound to this macro slot: change mode, or unbind (newEntry=null)
+  if(!KM.loaded) return null;
+  const km=KM.cur, data=new Uint8Array(1031); data.set([0x04,0xD4,0x00,0x40,0x00,0x00,0x00]); data.set(km.slice(8,8+1024),7);
+  let n=0;
+  for(let a=0;a<1024;a+=4){ if(data[7+a]===0x10 && data[7+a+3]===slot){ n++;
+    if(newEntry) for(let i=0;i<4;i++) data[7+a+i]=newEntry[i];
+    else { const s=a<0x210?a/4:null; const def=(s!=null?slotDef(s):Object.entries(K980_T2_DEFAULT).find(([t])=>0x210+4*t===a)?.[1])||"00000000";
+      for(let i=0;i<4;i++) data[7+a+i]=parseInt(def.substr(i*2,2),16); } } }
+  return n?data:null;
+}
+async function mcSave(){
+  const m=mcCur(); if(!m) return; if(MC.recording) mcStopRec();
+  m.name=$("mcName").value.trim()||`Macro ${MC.sel+1}`; m.mode=+$("mcMode").value; m.repeat=Math.max(1,Math.min(65535,+$("mcRepeat").value||1));
+  const bytes=mcEncode(m); if(bytes.length>128){ $("mcStatus").textContent="This macro is too long — remove some steps (max 128 bytes)."; return; }
+  const k=MC.sel, b=$("mcSave"); b.disabled=true; b.textContent="Saving…";
+  try{
+    await mcWrite(data=>{ for(let i=0;i<128;i++) data[7+k*128+i]=bytes[i]||0;
+      return {slots:[{k,bytes}], keymap:mcKeymapUpdate(m.slot,[0x10,0x00,m.mode,m.slot])}; });
+    const meta=mcMeta(); meta[m.slot]={name:m.name, mode:m.mode}; store.set("macroMeta",meta);
+    m.empty=false; MC.dirty=false; $("mcStatus").textContent=`Macro saved to keyboard ✓ (${new Date().toLocaleTimeString()}). Assign it to a key in Key remapping.`;
+  }catch(e){ $("mcStatus").textContent=`Not saved — ${e.message}.`; }
+  b.textContent="Save to keyboard"; renderMc(); kmRefreshMacroOptions(); renderKm();
+}
+async function mcDelete(){
+  const m=mcCur(); if(!m||m.empty) return; const k=MC.sel;
+  try{
+    const bytes=MC_PLACEHOLDER[k];
+    await mcWrite(data=>{ for(let i=0;i<128;i++) data[7+k*128+i]=bytes[i]||0; return {slots:[{k,bytes}], keymap:mcKeymapUpdate(m.slot,null)}; });
+    const meta=mcMeta(); delete meta[m.slot]; store.set("macroMeta",meta);
+    MC.slots[k]={slot:m.slot, empty:true, name:"", mode:1, repeat:1, events:[]}; MC.dirty=false;
+    $("mcStatus").textContent="Macro deleted; keys that used it went back to their default.";
+  }catch(e){ $("mcStatus").textContent=`Not deleted — ${e.message}.`; }
+  renderMc(); kmRefreshMacroOptions(); renderKm();
+}
+function kmRefreshMacroOptions(){
+  const s=$("kmFunc"); s.querySelector('optgroup[label="Macros"]')?.remove();
+  const saved=MC.slots.filter(m=>!m.empty); for(const k of Object.keys(KEY_NAMES)) if(k.startsWith("1000")) delete KEY_NAMES[k];
+  if(!saved.length) return;
+  const og=document.createElement("optgroup"); og.label="Macros";
+  for(const m of saved){ const e="1000"+m.mode.toString(16).padStart(2,"0").toUpperCase()+m.slot.toString(16).padStart(2,"0").toUpperCase();
+    KEY_NAMES[e]="Macro: "+m.name; const o=document.createElement("option"); o.value=e; o.textContent=m.name; og.append(o); }
+  s.append(og);
+}
+function buildMcUI(){
+  const md=$("mcMode"); for(const [v,n] of MC_MODES){ const o=document.createElement("option"); o.value=v; o.textContent=n; md.append(o); }
+  const ks=$("mcKey"); let g=null, og=null;
+  for(const [grp,n,h] of MC_KEYS){ if(grp!==g){ og=document.createElement("optgroup"); og.label=grp; ks.append(og); g=grp; } const o=document.createElement("option"); o.value=h; o.textContent=n; og.append(o); }
+  const edit=()=>{ const m=mcCur(); if(!m) return; m.name=$("mcName").value; m.mode=+md.value; m.repeat=+$("mcRepeat").value||1; MC.dirty=true; renderMc(); };
+  $("mcName").oninput=edit; md.onchange=edit; $("mcRepeat").oninput=edit;
+  $("mcRec").onclick=()=>MC.recording?mcStopRec():mcStartRec();
+  $("mcAdd").onclick=()=>{ const m=mcCur(); if(!m) return; const hid=+ks.value, d=+$("mcStepMs").value||20, how=$("mcHow").value;
+    if(how!=="up") m.events.push({down:true,hid,delay:d}); if(how!=="down") m.events.push({down:false,hid,delay:d}); MC.dirty=true; renderMc(); };
+  $("mcClear").onclick=()=>{ const m=mcCur(); if(!m) return; m.events=[]; MC.dirty=true; renderMc(); };
+  $("mcSave").onclick=mcSave; $("mcDelete").onclick=mcDelete;
+  renderMc();
+}
+/* ---------- Music mode (live LED frames; verified on a real K980) ----------
+   Feature report 08: [0A 7A 01] + R,G,B for LED slots 0..125 (slot numbers as in K980_LAYOUT), 381 data bytes.
+   The K980 only shows these while it keeps receiving them (a single frame turns the lights off), so frames are
+   streamed ~25 times a second, driven by the audio callback so it keeps running when the tab is in the background.
+   When music mode stops, the saved lighting page is re-sent (without the unlock, so nothing is stored) and the
+   keyboard returns to its normal effect. Other saves pause the stream while they run. */
+const MU={on:false, ctx:null, stream:null, an:null, proc:null, sending:false, hue:0, peak:0, levels:null, last:0};
+const MU_EFFECTS=[["bars","Spectrum bars"],["pulse","Pulse"],["rainbow","Rainbow beat"],["wave","Center wave"]];
+const K980_KEYS=K980_LAYOUT.map(([l,id,x1,y1,x2,y2])=>({id, cx:(x1+x2)/2, cy:(y1+y2)/2}));
+const KX0=Math.min(...K980_KEYS.map(k=>k.cx)), KX1=Math.max(...K980_KEYS.map(k=>k.cx)), KY0=Math.min(...K980_KEYS.map(k=>k.cy)), KY1=Math.max(...K980_KEYS.map(k=>k.cy));
+function hsv(h,s,v){ h=((h%360)+360)%360; const c=v*s, x=c*(1-Math.abs((h/60)%2-1)), m=v-c; const [r,g,b]=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];
+  return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)]; }
+function muFrame(){
+  const an=MU.an, n=an.frequencyBinCount, f=new Uint8Array(n); an.getByteFrequencyData(f);
+  const gain=+$("muGain").value, smooth=+$("muSmooth").value/100, eff=$("muEffect").value, useCol=$("muColorMode").value;
+  const base=rgb($("muColor").value);
+  const bands=21; if(!MU.levels) MU.levels=new Float32Array(bands);
+  for(let b=0;b<bands;b++){ const lo=Math.floor(Math.pow(n*0.7,b/bands)), hi=Math.max(lo+1,Math.floor(Math.pow(n*0.7,(b+1)/bands)));
+    let s=0; for(let i=lo;i<hi;i++) s+=f[i]; const v=Math.min(1,(s/(hi-lo)/255)*gain);
+    MU.levels[b]=Math.max(v, MU.levels[b]*smooth); }
+  let vol=0; for(let b=0;b<bands;b++) vol+=MU.levels[b]; vol/=bands; MU.peak=Math.max(vol,MU.peak*0.92);
+  MU.hue=(MU.hue+1+vol*12)%360;
+  const out=new Uint8Array(381); out.set([0x0A,0x7A,0x01]);
+  for(const k of K980_KEYS){
+    const fx=(k.cx-KX0)/(KX1-KX0), fy=1-(k.cy-KY0)/(KY1-KY0);   // fx 0..1 left→right, fy 0 bottom..1 top
+    const lvl=MU.levels[Math.min(bands-1,Math.floor(fx*bands))];
+    let h, v;
+    if(eff==="bars"){ v=fy<=lvl+0.04?1:0.03; h=useCol==="rainbow"?120-fy*120:null; }
+    else if(eff==="pulse"){ v=Math.min(1,0.08+vol*1.6); h=useCol==="rainbow"?MU.hue:null; }
+    else if(eff==="rainbow"){ v=Math.min(1,0.15+lvl*1.3); h=useCol==="rainbow"?MU.hue+fx*300:null; }
+    else { const d=Math.abs(fx-0.5)*2; v=d<=MU.peak*1.4?Math.min(1,0.3+lvl*1.2):0.03; h=useCol==="rainbow"?MU.hue+d*180:null; }
+    const [r,g,b]=h==null?base.map(c=>Math.round(c*v)):hsv(h,1,v);
+    out.set([r,g,b], 3+k.id*3);
+  }
+  return out;
+}
+async function muTick(){
+  if(!MU.on || MU.sending || MU.paused || !kb || kb.family!=="sino") return;
+  const now=performance.now(); if(now-MU.last<36) return; MU.last=now;
+  MU.sending=true;
+  try{ await sinoCfgDev().sendFeatureReport(8, muFrame()); }catch(e){ log("!",null,"music frame: "+e.message); }
+  MU.sending=false;
+  const lv=MU.levels?Math.round(100*MU.levels.reduce((a,b)=>a+b,0)/MU.levels.length):0; $("muMeter").style.width=Math.min(100,lv*1.5)+"%";
+}
+/* Sound sources. "auto" = a loopback input that carries everything the PC plays (Windows Stereo Mix, or a virtual
+   cable if installed), used like a microphone: no screen sharing, and Chrome remembers the permission. */
+const LOOPBACK=/stereo mix|what u hear|wave out|loopback|cable output|voicemeeter out|立体声混音|混音/i;
+const RAW_AUDIO={echoCancellation:false,noiseSuppression:false,autoGainControl:false};
+async function muInputs(){
+  let list=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="audioinput");
+  if(list.length && !list.some(d=>d.label)){   // labels appear only after permission — ask once
+    try{ const s=await navigator.mediaDevices.getUserMedia({audio:true}); s.getTracks().forEach(t=>t.stop()); }catch{}
+    list=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="audioinput"); }
+  return list;
+}
+async function muFillSources(){
+  const sel=$("muSource"), keep=sel.value||store.get("musicPrefs",{}).source||"auto";
+  let list=[]; try{ list=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="audioinput" && d.label); }catch{}
+  sel.innerHTML=""; const add=(v,t)=>{ const o=document.createElement("option"); o.value=v; o.textContent=t; sel.append(o); };
+  add("auto","PC sound — active output (automatic)");
+  for(const d of list) if(d.deviceId!=="default" && d.deviceId!=="communications") add("dev:"+d.deviceId, d.label);
+  add("screen","Share screen audio (asks each time)");
+  sel.value=[...sel.options].some(o=>o.value===keep)?keep:"auto";
+}
+async function muGetStream(src){
+  if(src==="screen"){
+    const s=await navigator.mediaDevices.getDisplayMedia({video:true, audio:{echoCancellation:false,noiseSuppression:false}, systemAudio:"include"});
+    if(!s.getAudioTracks().length){ s.getTracks().forEach(t=>t.stop()); throw new Error("no sound was shared — choose “Entire screen” and turn on “Share system audio”"); }
+    s.getVideoTracks().forEach(t=>t.stop()); return [s,"this PC's sound (screen share)"];
+  }
+  if(src.startsWith("dev:")){ const id=src.slice(4); const l=(await muInputs()).find(d=>d.deviceId===id);
+    return [await navigator.mediaDevices.getUserMedia({audio:{deviceId:{exact:id},...RAW_AUDIO}}), l?l.label:"the selected input"]; }
+  const lb=(await muInputs()).find(d=>LOOPBACK.test(d.label));
+  if(!lb) throw new Error("no Stereo Mix input was found on this PC — choose “Share screen audio” or a microphone in Sound source");
+  return [await navigator.mediaDevices.getUserMedia({audio:{deviceId:{exact:lb.deviceId},...RAW_AUDIO}}), "PC sound via "+lb.label];
+}
+/* Music helper (music-helper/K980-Music-Helper.cmd): captures whatever Windows plays on the ACTIVE output device
+   (WASAPI loopback, follows device changes) and streams a 512-bin spectrum to ws://127.0.0.1:28420. No prompts. */
+const MU_HELPER="ws://127.0.0.1:28420/";
+function muHelperConnect(timeout=900){
+  return new Promise((res,rej)=>{ let ws; try{ ws=new WebSocket(MU_HELPER); }catch(e){ return rej(e); }
+    ws.binaryType="arraybuffer"; const t=setTimeout(()=>{ try{ws.close();}catch{} rej(new Error("helper not running")); },timeout);
+    ws.onopen=()=>{ clearTimeout(t); res(ws); }; ws.onerror=()=>{ clearTimeout(t); rej(new Error("helper not running")); }; });
+}
+/* With the helper, the HELPER drives the keyboard (so music mode keeps going after this tab is closed);
+   the page only sends commands: {"cmd":"set", on, effect, colorMode, color, gain, smooth} and {"cmd":"pause", on}. */
+const muHelperSettings=()=>({effect:$("muEffect").value, colorMode:$("muColorMode").value, color:$("muColor").value, gain:+$("muGain").value, smooth:(+$("muSmooth").value)/100});
+function muHelperSend(o){ try{ if(MU.hws && MU.hws.readyState===1) MU.hws.send(JSON.stringify(o)); return MU.hws && MU.hws.readyState===1; }catch{ return false; } }
+function muAttachHelper(ws){
+  MU.hws=ws;
+  ws.onmessage=ev=>{ if(typeof ev.data!=="string") return; let m; try{ m=JSON.parse(ev.data); }catch{ return; }
+    if(m.level!=null){ $("muMeter").style.width=Math.min(100,m.level*1.5)+"%"; return; }
+    if(m.device){ MU.device=m.device; MU.helperOn=!!m.music; MU.on=MU.helperOn || (MU.on && !MU.viaHelper);
+      if(MU.helperOn){ MU.viaHelper=true; $("muSource").value="auto";
+        $("muEffect").value=m.effect||$("muEffect").value; $("muColorMode").value=m.colorMode||"rainbow"; if(m.color) $("muColor").value=m.color;
+        if(m.gain!=null){ $("muGain").value=m.gain; $("oMuGain").textContent=(+m.gain).toFixed(1)+"×"; }
+        if(m.smooth!=null){ $("muSmooth").value=Math.round(m.smooth*100); $("oMuSmooth").textContent=Math.round(m.smooth*100)+"%"; }
+        $("muStatus").textContent=`Music mode is ON — listening to ${m.device}. ${m.keyboard?"The keyboard follows the music, even after you close this page.":"Waiting for the keyboard on the USB cable (wired mode)."}`; }
+      else if(MU.viaHelper){ MU.viaHelper=false; $("muStatus").textContent=`Music helper ready (listening to ${m.device}). Press Start.`; }
+      renderMu(); } };
+  ws.onclose=()=>{ if(MU.hws!==ws) return; MU.hws=null; if(MU.viaHelper){ MU.viaHelper=false; MU.on=false; MU.helperOn=false;
+      $("muStatus").textContent="The music helper was closed — music mode stopped. Start K980-Music-Helper.cmd again to use it."; renderMu(); }
+    setTimeout(muHelperWatch,3000); };
+}
+async function muHelperWatch(){   // connect quietly whenever the helper is running, so the page shows its state
+  if(MU.hws) return; try{ muAttachHelper(await muHelperConnect(700)); }catch{ setTimeout(muHelperWatch,5000); }
+}
+async function muStart(src){
+  if(MU.on) await muStop();
+  src=src||$("muSource").value||"auto";
+  try{
+    if(src==="auto"){
+      if(!MU.hws){ try{ muAttachHelper(await muHelperConnect()); }catch{ throw new Error("the music helper isn't running. Start “K980-Music-Helper.cmd” (link below) and press Start again — or pick another Sound source"); } }
+      store.set("musicPrefs",{...store.get("musicPrefs",{}), source:src});
+      if(kb?.family==="sino"){ await busy; }
+      MU.viaHelper=true; MU.on=true; muHelperSend({cmd:"set", on:true, ...muHelperSettings()});
+      $("muStatus").textContent="Starting music mode in the helper…"; renderMu(); return;
+    }
+    const [stream,what]=await muGetStream(src);
+    store.set("musicPrefs",{...store.get("musicPrefs",{}), source:src});
+    await muFillSources();
+    const ctx=new AudioContext(), srcNode=ctx.createMediaStreamSource(stream), an=ctx.createAnalyser(); an.fftSize=1024; an.smoothingTimeConstant=0.5;
+    const proc=ctx.createScriptProcessor(1024,1,1), mute=ctx.createGain(); mute.gain.value=0;
+    srcNode.connect(an); an.connect(proc); proc.connect(mute); mute.connect(ctx.destination);
+    proc.onaudioprocess=()=>{ muTick(); };
+    stream.getAudioTracks()[0].onended=()=>muStop();
+    Object.assign(MU,{on:true,ctx,stream,an,proc,levels:null,peak:0});
+    $("muStatus").textContent=`Listening to ${what} — the keyboard follows the music while this page is open. If it doesn't react, play something louder or pick another Sound source.`;
+  }catch(e){ $("muStatus").textContent="Music mode didn't start: "+e.message; }
+  renderMu();
+}
+async function muStop(){
+  if(MU.viaHelper){ MU.viaHelper=false; MU.on=false; MU.helperOn=false; muHelperSend({cmd:"set", on:false});
+    $("muStatus").textContent="Music mode stopped — the helper puts your saved lighting back."; renderMu(); return; }
+  const was=MU.on; MU.on=false;
+  try{ MU.proc&&MU.proc.disconnect(); MU.stream&&MU.stream.getTracks().forEach(t=>t.stop()); MU.ctx&&await MU.ctx.close(); }catch{}
+  try{ if(MU.ws){ const w=MU.ws; MU.ws=null; w.close(); } }catch{}
+  Object.assign(MU,{ctx:null,stream:null,an:null,proc:null,ws:null});
+  if(was && kb?.family==="sino"){
+    while(MU.sending) await sleep(20);
+    try{ await queue(async()=>{ await sinoWrite((await sinoRead()).slice()); }); $("muStatus").textContent="Music mode stopped — your saved lighting is back."; }
+    catch(e){ $("muStatus").textContent="Music mode stopped. Unplug and replug the keyboard if the lights stay off."; }
+  }
+  renderMu();
+}
+function renderMu(){
+  const ok=kb?.family==="sino";
+  $("muStartPc").disabled=!ok||MU.on; $("muStop").disabled=!MU.on;
+  $("muColor").closest("span").style.display=$("muColorMode").value==="single"?"":"none";
+  if(!MU.on) $("muMeter").style.width="0";
+}
+function buildMuUI(){
+  const e=$("muEffect"); for(const [v,n] of MU_EFFECTS){ const o=document.createElement("option"); o.value=v; o.textContent=n; e.append(o); }
+  $("muStartPc").onclick=()=>muStart(); $("muStop").onclick=()=>{ store.set("musicPrefs",{...store.get("musicPrefs",{}), running:false}); muStop(); };
+  $("muSource").onchange=()=>{ store.set("musicPrefs",{...store.get("musicPrefs",{}), source:$("muSource").value}); if(MU.on) muStart(); };
+  $("muAuto").checked=!!store.get("musicPrefs",{}).auto;
+  $("muAuto").onchange=e=>store.set("musicPrefs",{...store.get("musicPrefs",{}), auto:e.target.checked});
+  muFillSources();
+  navigator.mediaDevices?.addEventListener?.("devicechange",()=>muFillSources());
+  const live=()=>{ if(MU.viaHelper) muHelperSend({cmd:"set", ...muHelperSettings()}); };
+  $("muColorMode").onchange=()=>{ renderMu(); live(); }; $("muEffect").onchange=live; $("muColor").oninput=live;
+  $("muGain").oninput=ev=>{ $("oMuGain").textContent=(+ev.target.value).toFixed(1)+"×"; live(); };
+  $("muSmooth").oninput=ev=>{ $("oMuSmooth").textContent=ev.target.value+"%"; live(); };
+  renderMu(); muHelperWatch();
+}
+/* ---------- Game mode colors (verified on a real K980) ----------
+   5 color sets ("Color 1-5" in Xinmeng's driver), each 378 bytes = 3 planes (R, G, B) x 126 keys, stored one after
+   another across pages BC (bytes 0-1023) and C0 (1024-2047). A key's position is its matrix number from the driver's
+   layout (row x 21 + column; Esc = 0, W = 44). Read 05 [89 BC/C0] -> feature 06; write 06 [09 page 00 40 00 00 00]
+   + 1024 bytes, then the B6 page, after the unlock. The keyboard shows set 1 in Game mode (lighting effect "Game mode"). */
+const SLOT_TO_MATRIX={0:0,6:1,12:2,18:3,24:4,30:5,36:6,42:7,48:8,54:9,60:10,66:11,72:12,78:13,84:14,90:15,96:16,102:17,
+ 1:21,7:22,13:23,19:24,25:25,31:26,37:27,43:28,49:29,55:30,61:31,67:32,73:33,79:34,85:35,91:36,97:37,103:38,
+ 2:42,8:43,14:44,20:45,26:46,32:47,38:48,44:49,50:50,56:51,62:52,68:53,74:54,80:55,86:56,92:57,98:58,104:59,
+ 3:63,9:64,15:65,21:66,27:67,33:68,39:69,45:70,51:71,57:72,63:73,69:74,81:76,87:77,93:78,99:79,
+ 4:84,10:86,16:87,22:88,28:89,34:90,40:91,46:92,52:93,58:94,64:95,70:96,82:97,88:98,94:99,100:100,106:101,
+ 5:105,11:106,17:107,35:110,53:113,59:114,65:115,77:117,83:118,89:119,95:120,101:121};
+let GM={loaded:false, data:null, set:0, staged:{}, tool:"paint", painting:false};
+const gmOff=(set,m,c)=>set*378+c*126+m;     // c: 0 = R, 1 = G, 2 = B
+function gmColor(set,slot){ const m=SLOT_TO_MATRIX[slot]; if(m==null) return null;
+  const st=GM.staged[set+":"+slot]; if(st) return st;
+  if(!GM.data) return "#000000"; return "#"+[0,1,2].map(c=>GM.data[gmOff(set,m,c)].toString(16).padStart(2,"0")).join(""); }
+async function gmLoad(){
+  try{
+    const a=await kmReadPage(0x89,0xBC), b=await kmReadPage(0x89,0xC0);
+    if((a[1]&0x7F)!==9 || (b[1]&0x7F)!==9) throw new Error("the Game mode colors didn't look as expected");
+    GM.data=new Uint8Array(2048); GM.data.set(a.slice(8,1032),0); GM.data.set(b.slice(8,1032),1024); GM.loaded=true; GM.staged={};
+    $("gmStatus").textContent="Showing the Game mode colors saved in your keyboard.";
+  }catch(e){ GM.loaded=false; log("!",null,e.message); $("gmStatus").textContent="Couldn't read the Game mode colors ("+e.message+") — editing is disabled to keep your keyboard safe."; }
+  renderGm();
+}
+function buildGmKeyboard(){
+  const el=$("gmKb"); el.innerHTML="";
+  const keys=K980_LAYOUT.map(([label,id,x1,y1,x2,y2])=>({label,id,x:x1,y:y1,w:x2-x1,h:y2-y1})), f=keyFrame(keys);
+  el.style.aspectRatio=`${f.w}/${f.h}`;
+  for(const k of keys){ const d=document.createElement("div"); d.className="k"; d.dataset.i=k.id; d.textContent=k.label; d.append(document.createElement("i"));
+    Object.assign(d.style,{left:((k.x-f.x0)/f.w*100)+"%",top:((k.y-f.y0)/f.h*100)+"%",width:(k.w/f.w*100)+"%",height:(k.h/f.h*100)+"%"}); el.append(d); }
+  const hit=e=>{ const t=document.elementFromPoint(e.clientX,e.clientY); return t && t.closest("#gmKb .k"); };
+  const paint=k=>{ if(!k) return; const slot=+k.dataset.i; if(SLOT_TO_MATRIX[slot]==null) return;
+    GM.staged[GM.set+":"+slot]= GM.tool==="paint" ? $("gmColor").value : "#000000"; renderGm(); };
+  el.addEventListener("pointerdown",e=>{ GM.painting=true; el.setPointerCapture(e.pointerId); paint(hit(e)); });
+  el.addEventListener("pointermove",e=>{ if(GM.painting) paint(hit(e)); });
+  const end=()=>{ GM.painting=false; }; el.addEventListener("pointerup",end); el.addEventListener("pointercancel",end);
+}
+function renderGm(){
+  document.querySelectorAll("#gmSets button").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.v===GM.set)));
+  document.querySelectorAll("#gmKb .k").forEach(d=>{ const c=gmColor(GM.set,+d.dataset.i), on=c && c!=="#000000";
+    d.style.background=on?`color-mix(in srgb, ${c} 60%, var(--key))`:""; d.style.borderColor=on?c:""; d.querySelector("i").style.background=on?c:"transparent";
+    d.classList.toggle("changed", !!GM.staged[GM.set+":"+d.dataset.i]); });
+  const n=Object.keys(GM.staged).length, ok=GM.loaded && kb?.family==="sino";
+  $("gmApply").disabled=!n||!ok; $("gmUndo").disabled=!n; $("gmUse").disabled=!ok;
+  $("gmDirty").textContent=n?`${n} key color${n>1?"s":""} not applied yet — press Apply.`:"";
+}
+async function gmApply(){
+  const b=$("gmApply"); b.disabled=true; b.textContent="Applying…";
+  try{
+    await queue(async()=>{
+      const d=sinoCfgDev();
+      await sinoUnlock();
+      const cfg=await sinoRead();
+      const a=await kmReadPage(0x89,0xBC), c=await kmReadPage(0x89,0xC0);
+      if((a[1]&0x7F)!==9 || (c[1]&0x7F)!==9) throw new Error("the Game mode colors didn't look as expected — nothing was written");
+      const all=new Uint8Array(2048); all.set(a.slice(8,1032),0); all.set(c.slice(8,1032),1024);
+      for(const [key,hex] of Object.entries(GM.staged)){ const [set,slot]=key.split(":").map(Number), m=SLOT_TO_MATRIX[slot]; const v=rgb(hex);
+        for(let ch=0;ch<3;ch++) all[gmOff(set,m,ch)]=v[ch]; }
+      for(const [i,page] of [[0,0xBC],[1,0xC0]]){ const data=new Uint8Array(1031); data.set([0x09,page,0x00,0x40,0x00,0x00,0x00]); data.set(all.slice(i*1024,i*1024+1024),7);
+        await d.sendFeatureReport(6,data); log("→",data.slice(0,48),`(write Game mode colors, page ${page.toString(16)})`); await sleep(60); }
+      await sinoWrite(cfg.slice());
+      const va=await kmReadPage(0x89,0xBC), vc=await kmReadPage(0x89,0xC0); const v=new Uint8Array(2048); v.set(va.slice(8,1032),0); v.set(vc.slice(8,1032),1024);
+      for(let i=0;i<2048;i++) if(v[i]!==all[i]) throw new Error("the keyboard didn't confirm the colors");
+      GM.data=v; GM.staged={};
+    });
+    $("gmStatus").textContent=`Game mode colors saved to keyboard ✓ (${new Date().toLocaleTimeString()}). Choose “Game mode” in Lighting (or press Use Game mode) to see them.`;
+  }catch(e){ $("gmStatus").textContent=`Not saved — ${e.message}.`; }
+  b.textContent="Apply"; renderGm();
+}
+function buildGmUI(){
+  const s=$("gmSets"); for(let i=0;i<5;i++){ const b=document.createElement("button"); b.className="small"; b.dataset.v=i; b.textContent="Color set "+(i+1);
+    b.onclick=()=>{ GM.set=i; renderGm(); }; s.append(b); }
+  for(const c of ["#ff0000","#ff7a00","#ffd400","#00ff3c","#00e5ff","#0050ff","#a000ff","#ff00a8","#ffffff"]){
+    const b=document.createElement("button"); b.style.background=c; b.title=c; b.setAttribute("aria-label","Color "+c);
+    b.onclick=()=>{ $("gmColor").value=c; GM.tool="paint"; document.querySelectorAll("#gmTool button").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.v==="paint"))); }; $("gmSwatches").append(b); }
+  document.querySelectorAll("#gmTool button").forEach(b=>b.onclick=()=>{ GM.tool=b.dataset.v; document.querySelectorAll("#gmTool button").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); });
+  $("gmFill").onclick=()=>{ for(const [,slot] of K980_LAYOUT) if(SLOT_TO_MATRIX[slot]!=null) GM.staged[GM.set+":"+slot]=$("gmColor").value; renderGm(); };
+  $("gmClear").onclick=()=>{ for(const [,slot] of K980_LAYOUT) if(SLOT_TO_MATRIX[slot]!=null) GM.staged[GM.set+":"+slot]="#000000"; renderGm(); };
+  $("gmApply").onclick=gmApply; $("gmUndo").onclick=()=>{ GM.staged={}; renderGm(); };
+  $("gmUse").onclick=()=>{ SL.mode=21; queueSinoSave(); sinoApply(); };
+  buildGmKeyboard(); renderGm();
+}
+const ORIG_B6_BLOCKS="03030000000B2001010000005555010200020000FFFF074407440744074407440744074407440744074407210744074407440744FFFF074407440744074407440744074407440744074407440744074404040404040404040404000000000000000000000000000000000000000000000000000000000000005AA503030000000B2001010000005555010200020000FFFF074407440744074407440744074407440744074407210744074407440744FFFF074407440744074407440744074407440744074407440744074404040404040404040404000000000000000000000000000000000000000000000000000000000000005AA5";   // full bytes 16..261: both lighting/settings blocks as the keyboard had them
+const ORIG_KEYS="0200000F000000350000002B0200002D060000E1060000E0020000000000001E02000019020000160000001D0200000C020000010000001F0200001A020000150000001B060000E202000002000000200200001B00000007000000060000009102000003000000210200001C00000009000000190000008B02000004000000220200001D0200000D000000050000002C02000005000000230000001C0000000B000000110000008A0200000600000024000000180000000D000000100000009002000007000000250000000C0000000E00000036060000E60200000800000026000000120000000F00000037200000000200000900000027000000130000003300000038060000E40200000A0000002D0000002F00000034060000E5000000880200000B0000002E000000300200002C00000064020000120200002E0000002A0200002C0000002802000010020000110000004A000000530000005F0000005C00000059020000130200002F00000054000000600000005D0000005A000000620000004B00000055000000610000005E0000005B000000630000004E00000056000000570000008500000058000000000000000000000000000000000000000000000000000000000000000000000055000000610000005E0000005B000000630000000000000056000000570000008500000058000000009001B2E0701104F0203E0C204809129B6612910812001E220000003A0000003B0000003C0000003D0000003E0000003F000000400000004100000042000000430000004400000045060000E30000000A0000004A000000290000005200000051000000500000004F0000001A0000001600000004000000070000002B000000140000001A0000000800000015000000170000004B0000004E0000001E0000001F00000020000000210000002200000023000000240000002500000026060000E4060000E50000004900000031000000390000004C0000004D040000700400006F040001920400019404000183040000B6040000B5040000CD040000B7040000E2040000EA040000E90E0000010E0000100B0000090E0000050C0001000C0002000D0002000D0001000000001A0000001600000004000000070000002B0E00000C0E00000D0E00000E0E00000F0E0000110B00000D0B0000110B0000200B0000210B000022000000210000002200000023000000240000002500000026060000E4060000E50000004D0B0003000E0000071200030000000049900EED7402F0539BF0759B01A37411F0A37408F0900EEEE0FEA3E0F5828E83E4F043970422900ED0E0FF700A900ECEE0900ED8F0800CEFB40108900ECEE0900EDAF0539BF04397042212D0971200167FF47E0112B2D012AD5112D1DA12798F12D2AB12D23312D2B102D0E80000000000";   // key table page D4 (1024 bytes)
+const ORIG_GAME="000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000FF00000000000000000000000000000000000000000000000000000000000000000000000000000000000000FF00000000000000000000000000000000000000FFFFFF00000000000000000000000000000000000000000000000000000000000000FF00000000000000000000000000000000000000FFFFFF00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000FFFFFF0000000000000000000000000000000000FFFFFFFFFF000000000000000000000000000000FFFFFFFFFF0000000000000000000000000000000000FFFFFF00FF000000000000000000000000000000FF0000000000FF0000000000000000000000000000FF00FF0000FF00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000FFFFFFFFFFFFFF0000000000000000000000000000FFFFFFFFFF00000000000000000000000000000000FFFFFFFFFF000000000000000000000000000000FF000000FFFF000000000000000000000000000000FF000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000FFFFFFFFFFFFFF0000000000000000000000000000FFFFFFFF0000000000000000000000000000000000FFFFFFFF000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000FF00FF0000000000000000000000000000000000FFFFFF0000000000000000000000000000000000FF0000000000000000000000000000FF0000000000FF00FF0000000000000000000000FFFFFF000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";   // Game mode colors, pages BC+C0 (2048 bytes)
+/* ---------- Reset everything (back to how this K980 was when first read) ----------
+   Uses the keyboard's own original data captured before any change: lighting/settings blocks (page B6),
+   key table (page D4), Game mode colors (pages BC+C0) and the factory macro placeholders (page E8).
+   Written with the unlock, in the official order, and read back to confirm. The Mac layer (D8) is never touched. */
+const hexBytes=h=>Uint8Array.from(h.match(/../g).map(x=>parseInt(x,16)));
+async function resetAll(){
+  if(!confirm("Reset everything on the keyboard?\n\nLighting, sleep time, debounce, key remaps, macros and Game mode colors go back to how this keyboard was originally. Music mode is turned off.\n\nThis can't be undone (but you can set things again afterwards).")) return;
+  const b=$("rsBtn"); b.disabled=true; b.textContent="Resetting…"; $("rsStatus").textContent="Resetting — keep the keyboard plugged in…";
+  try{
+    if(typeof MU!=="undefined" && MU.on){ if(MU.viaHelper) muHelperSend({cmd:"set", on:false, effect:"bars", colorMode:"rainbow", color:"#00c8ff", gain:1.5, smooth:0.8}); else await muStop(); MU.on=false; MU.viaHelper=false; }
+    await sleep(300);
+    await queue(async()=>{
+      const d=sinoCfgDev();
+      const writePage=async(op,page,bytes)=>{ const data=new Uint8Array(1031); data.set([op,page,0x00,0x40,0x00,0x00,0x00]); data.set(bytes,7);
+        await d.sendFeatureReport(6,data); log("→",data.slice(0,32),`(reset: write page ${page.toString(16)})`); await sleep(60); };
+      await sinoUnlock();
+      const cfg=await sinoRead();                                   // validates the settings page
+      const km=await kmReadPage(0x84,0xD4); if(!((km[1]&0x7F)===4 && km[2]===0xD4)) throw new Error("the key table didn't look as expected");
+      const mp=await kmReadPage(0x85,MC_PAGE); if((mp[1]&0x7F)!==5) throw new Error("the macro memory didn't look as expected");
+      const ga=await kmReadPage(0x89,0xBC), gc=await kmReadPage(0x89,0xC0); if((ga[1]&0x7F)!==9 || (gc[1]&0x7F)!==9) throw new Error("the Game mode colors didn't look as expected");
+      // macros: put every slot of page E8 back to its factory placeholder
+      const mac=mp.slice(8,1032); for(let k=0;k<MC_COUNT;k++){ mac.fill(0,k*128,k*128+128); mac.set(MC_PLACEHOLDER[k],k*128); }
+      const game=hexBytes(ORIG_GAME), keys=hexBytes(ORIG_KEYS);
+      await writePage(0x05,MC_PAGE,mac);
+      await writePage(0x09,0xBC,game.slice(0,1024)); await writePage(0x09,0xC0,game.slice(1024));
+      await writePage(0x04,0xD4,keys);
+      cfg.set(hexBytes(ORIG_B6_BLOCKS),16);
+      await sinoWrite(cfg.slice());                                  // also makes the keyboard reload everything
+      // confirm
+      const v1=await kmReadPage(0x84,0xD4), v2=await sinoRead(), v3=await kmReadPage(0x89,0xBC);
+      for(let i=0;i<504;i++) if(v1[8+i]!==keys[i]) throw new Error("the keyboard didn't confirm the key table");
+      const ob=hexBytes(ORIG_B6_BLOCKS); for(let i=0;i<ob.length;i++) if(v2[16+i]!==ob[i]) throw new Error("the keyboard didn't confirm the lighting");
+      for(let i=0;i<1024;i++) if(v3[8+i]!==game[i]) throw new Error("the keyboard didn't confirm the Game mode colors");
+    });
+    for(const k of ["macroMeta","sinoLight3","perkeySino","musicPrefs"]) try{ localStorage.removeItem(k); }catch{}
+    $("rsStatus").textContent=`Everything is back to the original settings ✓ (${new Date().toLocaleTimeString()}).`;
+    queue(sinoLoad); queue(kmLoad); queue(mcLoad); queue(gmLoad);
+  }catch(e){ $("rsStatus").textContent=`Reset stopped — ${e.message}. Nothing after that point was changed; try again with the cable connected.`; }
+  b.textContent="Reset everything"; b.disabled=!(kb?.family==="sino");
+}
 let sinoTimer=null;
 const queueSino=()=>{ if(!kb||kb.family!=="sino") return; clearTimeout(sinoTimer); sinoTimer=setTimeout(()=>queue(sinoSend),80); };
 
@@ -823,7 +1419,12 @@ function queue(fn){
   const p=busy.then(async()=>{
     if(!kb) throw new Error("Not connected");
     if(!kb.dev.opened) await kb.dev.open();
-    return fn();
+    // pause music-mode frames while a read/save runs, so the two don't collide
+    // (and ask the music helper to pause too, if it is driving the keyboard)
+    const helperBusy=typeof MU!=="undefined" && MU.helperOn && muHelperSend({cmd:"pause", on:true});
+    if(helperBusy) await sleep(150);
+    if(typeof MU!=="undefined"){ MU.paused=true; while(MU.sending) await sleep(10); }
+    try{ return await fn(); } finally { if(typeof MU!=="undefined") MU.paused=false; if(helperBusy) muHelperSend({cmd:"pause", on:false}); }
   });
   busy=p.catch(e=>{ log("!", null, e.message); });
   return p;
@@ -858,7 +1459,7 @@ async function connect(g){
   $("introCard").hidden=true;
   render(); renderDevices();
   if(kb.family==="xvx-dongle"){ readBattery(); battTimer=setInterval(readBattery, 15000); }
-  if(kb.family==="sino"){ sinoLoaded=false; $("sStatus").textContent="Reading the lighting saved in your keyboard…"; queue(sinoLoad); KM.loaded=false; $("kmStatus").textContent="Reading the keys saved in your keyboard…"; queue(kmLoad); }
+  if(kb.family==="sino"){ sinoLoaded=false; $("sStatus").textContent="Reading the lighting saved in your keyboard…"; queue(sinoLoad); KM.loaded=false; $("kmStatus").textContent="Reading the keys saved in your keyboard…"; queue(kmLoad); MC.loaded=false; $("mcStatus").textContent="Reading the macros saved in your keyboard…"; queue(mcLoad); GM.loaded=false; $("gmStatus").textContent="Reading the Game mode colors saved in your keyboard…"; queue(gmLoad); const mp=store.get("musicPrefs",{}); if(mp.auto && mp.source!=="screen") setTimeout(()=>{ if(kb?.family==="sino" && !MU.on) muStart(mp.source||"auto"); },1500); }
 }
 async function disconnect(silent){
   clearInterval(battTimer); battTimer=null;
@@ -952,6 +1553,22 @@ function render(){
   const relay=kb?.family==="k980-relay";
   $("sinoCard").hidden=!(kb?.family==="sino" || relay);
   $("keyCard").hidden=!(kb?.family==="sino" || relay);
+  $("ksCard").hidden=!(kb?.family==="sino" || relay);
+  $("mcCard").hidden=!(kb?.family==="sino" || relay);
+  $("muCard").hidden=!(kb?.family==="sino" || relay);
+  $("gmCard").hidden=!(kb?.family==="sino" || relay);
+  $("rsCard").hidden=!(kb?.family==="sino" || relay); $("rsBtn").disabled=kb?.family!=="sino";
+  $("gmControls").classList.toggle("disabled-ui", relay);
+  if(relay) $("gmStatus").textContent="Locked while the keyboard is in "+(kb.bus==="bluetooth"?"Bluetooth":"2.4G")+" mode — connect the USB cable in wired mode to edit Game mode colors (they still show in this mode).";
+  if(typeof renderGm==="function") renderGm();
+  $("muControls").classList.toggle("disabled-ui", relay);
+  if(relay && typeof MU!=="undefined" && MU.on) muStop();
+  if(relay) $("muStatus").textContent="Locked while the keyboard is in "+(kb.bus==="bluetooth"?"Bluetooth":"2.4G")+" mode — connect the USB cable in wired mode to use music mode.";
+  if(typeof renderMu==="function") renderMu();
+  $("mcControls").classList.toggle("disabled-ui", relay);
+  if(relay) $("mcStatus").textContent="Locked while the keyboard is in "+(kb.bus==="bluetooth"?"Bluetooth":"2.4G")+" mode — connect the USB cable in wired mode to edit macros.";
+  $("ksControls").classList.toggle("disabled-ui", relay);
+  if(relay) $("ksStatus").textContent="Locked while the keyboard is in "+(kb.bus==="bluetooth"?"Bluetooth":"2.4G")+" mode — connect the USB cable in wired mode to change settings.";
   $("kmControls").classList.toggle("disabled-ui", relay);
   if(relay) $("kmStatus").textContent="Locked while the keyboard is in "+(kb.bus==="bluetooth"?"Bluetooth":"2.4G")+" mode — connect the USB cable in wired mode to remap keys.";
   $("sControls").classList.toggle("disabled-ui", relay);
@@ -1007,7 +1624,7 @@ const perKeyStore=()=>kb?.family==="sino"?perKeySino:perKeyXvx;
 function buildKeyboard(){
   const mode=kb?.family==="sino"?"sino":"xvx";
   const fam=kb?.family;
-  $("perKeyCard").hidden=!!kb && !(fam==="xvx-wired"||fam==="xvx-dongle"||fam==="sino");
+  $("perKeyCard").hidden=!!kb && !(fam==="xvx-wired"||fam==="xvx-dongle");   // K980 (sino) only shows streamed frames — see Music mode
   $("pBrightWrap").hidden=mode!=="sino";
   $("pApply").disabled=!(fam==="xvx-wired"||fam==="sino");
   $("pNote").textContent=fam==="xvx-dongle"?"Per-key colors upload over the USB cable only — plug in the cable to send them."
@@ -1089,6 +1706,11 @@ function buildUI(){
   $("sSpeed").oninput=e=>{ SL.speed=+e.target.value; queueSinoSave(); };
   buildSinoPresets();
   buildKmUI();
+  buildKsUI();
+  buildMcUI();
+  buildMuUI();
+  buildGmUI();
+  $("rsBtn").onclick=resetAll;
   $("sApply").onclick=sinoApply;
   $("sRevert").onclick=()=>{ $("sStatus").textContent="Reloading the lighting saved in your keyboard…"; queue(sinoLoad); };
   renderSino();
